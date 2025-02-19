@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 struct network_t{
 
@@ -38,6 +39,10 @@ struct num_values_t{
 struct network_t* network_init( struct network_arguments_t* args );
 
 struct num_values_t get_num_values( struct network_arguments_t* args );
+
+void initialize_values( struct network_t* network, struct num_values_t num_values );
+
+void fprint_network(FILE *__restrict stream, struct network_t* network, struct num_values_t num_values);
 
 void free_network( struct network_t* network );
 
