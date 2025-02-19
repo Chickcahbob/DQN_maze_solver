@@ -94,7 +94,11 @@ void fprint_network( FILE *__restrict stream, struct network_t* network, struct 
 
 }
 
-void free_network( struct network_t* network ){
+void forward_prop(struct network_t *network, struct network_arguments_t *args){
+
+}
+
+void delete_network( struct network_t* network ){
 
     free(network->nodes);
     free(network->weights);
@@ -104,7 +108,7 @@ void free_network( struct network_t* network ){
 
 }
 
-void free_network_arguments(struct network_arguments_t *network_args){
+void delete_network_arguments(struct network_arguments_t *network_args){
 
     free( network_args->nodes_per_layer );
     free( network_args );

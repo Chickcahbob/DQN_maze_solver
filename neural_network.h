@@ -44,8 +44,10 @@ void initialize_values( struct network_t* network, struct num_values_t num_value
 
 void fprint_network(FILE *__restrict stream, struct network_t* network, struct num_values_t num_values);
 
-void free_network( struct network_t* network );
+void delete_network( struct network_t* network );
 
-void free_network_arguments( struct network_arguments_t* network_args );
+void delete_network_arguments( struct network_arguments_t* network_args );
+
+void forward_prop( struct network_t *network, struct network_arguments_t *args );
 
 #endif

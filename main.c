@@ -6,14 +6,14 @@
 #include "keyboard.h"
 #include "neural_network.h"
 
-#define HEIGHT 10
-#define WIDTH 9
-
 int play( int height, int width );
 
 int main(){
 
     srand(time(NULL));
+
+    const int height = 10;
+    const int width = 8;
 
     /*int completed = play( HEIGHT, WIDTH );
 
@@ -37,10 +37,10 @@ int main(){
     struct network_t* network = network_init( network_arguments );
 
     if( network != NULL )
-        free_network(network);
+        delete_network(network);
 
     if( network_arguments != NULL )
-        free_network_arguments(network_arguments);
+        delete_network_arguments(network_arguments);
 
     return 0;
 
