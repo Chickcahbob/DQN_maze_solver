@@ -24,23 +24,28 @@ int main(){
 
     */
 
-    struct network_arguments_t* network_arguments = (struct network_arguments_t*) malloc( sizeof( struct network_arguments_t ) );
+    struct network_t *network = (struct network_t*) malloc( sizeof(struct network_t) );
 
-    network_arguments->num_layers = 3;
+    network->network_args = (struct network_args_t*) malloc( sizeof( struct network_args_t ) );
 
-    network_arguments->nodes_per_layer = (int *) malloc( sizeof( int ) * network_arguments->num_layers );
+    network->network_args->num_layers = 3;
 
-    network_arguments->nodes_per_layer[0] = 3;
-    network_arguments->nodes_per_layer[1] = 5;
-    network_arguments->nodes_per_layer[2] = 3;
+    network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * network->network_args->num_layers );
 
-    struct network_t* network = network_init( network_arguments );
+    network->network_args->nodes_per_layer[0] = 3;
+    network->network_args->nodes_per_layer[1] = 5;
+    network->network_args->nodes_per_layer[2] = 3;
+
+    network->network_values = network_init( network->network_args );
+
+    if( network->network_values != NULL )
+        delete_network_values(network->network_values);
+
+    if( network->network_args != NULL )
+        delete_network_args(network->network_args);
 
     if( network != NULL )
-        delete_network(network);
-
-    if( network_arguments != NULL )
-        delete_network_arguments(network_arguments);
+        free( network );
 
     return 0;
 

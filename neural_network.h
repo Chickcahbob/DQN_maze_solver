@@ -5,49 +5,54 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <pthread.h>
 
-struct network_t{
-
+struct network_values_t{
    float *nodes;
    float *biases;
    float *weights;
-
 };
 
 enum activation_function{
-
     LINEAR,
     SIGMOID
-
 };
 
-struct network_arguments_t{
-
+struct network_args_t{
     int num_layers;
     int *nodes_per_layer;
     enum activation_function* functions;
+};
 
+struct network_t{
+    struct network_values_t *network_values;
+    struct network_args_t *network_args;
 };
 
 struct num_values_t{
-
     int num_nodes_and_biases;
     int num_weights;
-
 };
 
-struct network_t* network_init( struct network_arguments_t* args );
+//Takes user definied network arguments to generate initial network values
+struct network_values_t* network_init( struct network_args_t* network_args );
 
-struct num_values_t get_num_values( struct network_arguments_t* args );
+//Gets the numver of weights, nodes, and biases in the network
+struct num_values_t get_num_values( struct network_args_t* network_args );
 
-void initialize_values( struct network_t* network, struct num_values_t num_values );
+//Assigns random values to weights, nodes, and biases in the range [0,max]
+void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t num_values, float max);
 
-void fprint_network(FILE *__restrict stream, struct network_t* network, struct num_values_t num_values);
+//Subroutine to calculate forward propogation of node values
+void *linear_forward_prop( struct network_t *network );
 
-void delete_network( struct network_t* network );
+void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values);
 
-void delete_network_arguments( struct network_arguments_t* network_args );
+void delete_network( struct network_t *network );
 
-void forward_prop( struct network_t *network, struct network_arguments_t *args );
+void delete_network_values( struct network_values_t* network_values );
+
+void delete_network_args( struct network_args_t* network_network_args );
+
 
 #endif
