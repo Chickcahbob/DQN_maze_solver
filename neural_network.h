@@ -44,7 +44,7 @@ struct num_values_t get_num_values( struct network_args_t* network_args );
 void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t num_values, float max);
 
 //Subroutine to calculate forward propogation of node values
-void *linear_forward_prop( struct network_t *network );
+void *forward_prop( struct network_t *network );
 
 //Print weights, nodes, and biases to specified output stream
 void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values);
