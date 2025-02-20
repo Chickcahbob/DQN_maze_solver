@@ -121,3 +121,16 @@ void delete_network_args(struct network_args_t *network_network_args){
         free( network_network_args );
 
 }
+
+void delete_network( struct network_t *network ){
+
+    if( network->network_args != NULL )
+        delete_network_args( network->network_args );
+
+    if( network->network_values != NULL )
+        delete_network_values( network->network_values);
+
+    if( network != NULL )
+        free( network );
+
+}

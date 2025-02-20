@@ -46,13 +46,16 @@ void initialize_random_values( const struct network_values_t* network_values, co
 //Subroutine to calculate forward propogation of node values
 void *linear_forward_prop( struct network_t *network );
 
+//Print weights, nodes, and biases to specified output stream
 void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values);
 
-void delete_network( struct network_t *network );
-
+//Frees memory allocated for weights, nodes, and biases
 void delete_network_values( struct network_values_t* network_values );
 
+//Frees memory allocated for network arguments
 void delete_network_args( struct network_args_t* network_network_args );
 
+//Frees memory allocated for network
+void delete_network( struct network_t *network );
 
 #endif

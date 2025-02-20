@@ -38,14 +38,8 @@ int main(){
 
     network->network_values = network_init( network->network_args );
 
-    if( network->network_values != NULL )
-        delete_network_values(network->network_values);
-
-    if( network->network_args != NULL )
-        delete_network_args(network->network_args);
-
     if( network != NULL )
-        free( network );
+        delete_network( network );
 
     return 0;
 
@@ -76,7 +70,8 @@ int play( int height, int width ){
     system( "clear" );
     print_board( board, width, height );
 
-    delete_board( board );
+    if( board != NULL )
+        delete_board( board );
 
     return completed;
 
