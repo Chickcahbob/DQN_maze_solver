@@ -72,7 +72,7 @@ void fprint_network( FILE *__restrict stream, const struct network_values_t* net
 
     }
 
-    fprintf( stream, "BIASES " );
+    fprintf( stream, "BIASES: " );
 
     for( int i = 0; i < num_values.num_nodes_and_biases; i++ ){
 
