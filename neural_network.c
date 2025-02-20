@@ -1,5 +1,4 @@
 #include "neural_network.h"
-#include <stdlib.h>
 
 struct network_values_t* network_init( struct network_args_t* network_args ){
 
