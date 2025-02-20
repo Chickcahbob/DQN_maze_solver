@@ -48,7 +48,10 @@ void initialize_random_values(const struct network_values_t* network_values, con
 }
 
 void *linear_forward_prop(struct network_t *network){
-
+    /*TODO: 1. Divide a layer of nodes amongst threads
+            2. Pass associated nodes for thread to evaluate through void *args
+            2. Summation of (prev_layer_nodes * linked_weights ) + associated bias
+    */
     return NULL;
 
 }
