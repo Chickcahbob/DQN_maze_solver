@@ -49,7 +49,7 @@ void initialize_random_values(const struct network_values_t* network_values, con
 
 void forward_prop( struct network_t* network){
 
-    int num_cores;
+    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 
     int num_layers_alias = network->network_args->num_layers;
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
@@ -57,8 +57,6 @@ void forward_prop( struct network_t* network){
     int *calcs_per_core;
 
     for( int i = 0; i < num_layers_alias; i++ ){
-
-        num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 
         calcs_per_core = calloc( num_cores, sizeof(int) );
 
