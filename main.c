@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 #include "board.h"
 #include "movement.h"
 #include "keyboard.h"
@@ -14,6 +15,7 @@ int main(){
 
     const int height = 10;
     const int width = 8;
+
 
     /*int completed = play( HEIGHT, WIDTH );
 
@@ -29,14 +31,29 @@ int main(){
     network->network_args = (struct network_args_t*) malloc( sizeof( struct network_args_t ) );
 
     network->network_args->num_layers = 3;
+    int num_layers_alias = network->network_args->num_layers;
 
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * network->network_args->num_layers );
+    int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
-    network->network_args->nodes_per_layer[0] = 3;
-    network->network_args->nodes_per_layer[1] = 5;
-    network->network_args->nodes_per_layer[2] = 3;
+    nodes_per_layer_alias[0] = 3;
+    nodes_per_layer_alias[1] = 8;
+    nodes_per_layer_alias[2] = 5;
+
+    network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * 3);
+    enum activation_function* functions_alias = network->network_args->functions;
+
+    for( int i = 0; i < num_layers_alias; i++ ){
+
+        if( i == num_layers_alias - 1 )
+            functions_alias[i] = _LINEAR;
+        else
+            functions_alias[i] = _SIGMOID;
+    }
 
     network->network_values = network_init( network->network_args );
+
+    forward_prop(network);
 
     if( network != NULL )
         delete_network( network );

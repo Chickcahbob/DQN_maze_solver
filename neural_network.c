@@ -1,4 +1,5 @@
 #include "neural_network.h"
+#include <unistd.h>
 
 struct network_values_t* network_init( struct network_args_t* network_args ){
 
@@ -46,14 +47,33 @@ void initialize_random_values(const struct network_values_t* network_values, con
 
 }
 
-void *_forward_prop(struct network_t *network){
-    /*TODO: 1. Divide a layer of nodes amongst threads
-            2. Pass associated nodes for thread to evaluate through void *args
+void forward_prop( struct network_t* network){
+
+    int num_cores;
+
+    int num_layers_alias = network->network_args->num_layers;
+    int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
+    
+    int *calcs_per_core;
+
+    for( int i = 0; i < num_layers_alias; i++ ){
+
+        num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
+
+        calcs_per_core = calloc( num_cores, sizeof(int) );
+
+        for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[i]; node_to_calc++ )
+            calcs_per_core[node_to_calc % num_cores]++;
+
+        free( calcs_per_core );
+
+    }
+    /*TODO: 1. Pass associated nodes for thread to evaluate through void *args
             2. Summation of (prev_layer_nodes * linked_weights ) + associated bias
             3. Perform sigmoid activation function if specified
     */
-    return NULL;
 
+            
 }
 
 //Print current data stored in the network to specified output stream type
@@ -116,12 +136,16 @@ void delete_network_values( struct network_values_t* network_values ){
 
 }
 
-void delete_network_args(struct network_args_t *network_network_args){
+void delete_network_args(struct network_args_t *network_args){
 
-    if( network_network_args->nodes_per_layer != NULL )
-        free( network_network_args->nodes_per_layer );
-    if( network_network_args != NULL )
-        free( network_network_args );
+    if( network_args->nodes_per_layer != NULL )
+        free( network_args->nodes_per_layer );
+
+    if( network_args->functions != NULL )
+        free( network_args->functions );
+
+    if( network_args != NULL )
+        free( network_args );
 
 }
 

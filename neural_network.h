@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <unistd.h>
 #include <pthread.h>
 
 struct network_values_t{
@@ -14,8 +15,8 @@ struct network_values_t{
 };
 
 enum activation_function{
-    LINEAR,
-    SIGMOID
+    _LINEAR,
+    _SIGMOID
 };
 
 struct network_args_t{
@@ -27,6 +28,7 @@ struct network_args_t{
 struct network_t{
     struct network_values_t *network_values;
     struct network_args_t *network_args;
+    struct num_values_t *num_values;
 };
 
 struct num_values_t{
@@ -44,7 +46,7 @@ struct num_values_t get_num_values( struct network_args_t* network_args );
 void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t num_values, float max);
 
 //Subroutine to calculate forward propogation of node values
-void *forward_prop( struct network_t *network );
+void forward_prop( struct network_t *network );
 
 //Print weights, nodes, and biases to specified output stream
 void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values);
