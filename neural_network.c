@@ -1,4 +1,6 @@
 #include "neural_network.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 struct network_values_t* network_init( struct network_args_t* network_args ){
@@ -56,20 +58,41 @@ void forward_prop( struct network_t* network){
     
     int *calcs_per_core;
 
+    int max_threads;
+
+    struct multithreading_nodes_t * multithreading_nodes = calloc(num_cores, sizeof(struct multithreading_nodes_t));
+
     for( int i = 0; i < num_layers_alias; i++ ){
 
         calcs_per_core = calloc( num_cores, sizeof(int) );
 
         for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[i]; node_to_calc++ )
             calcs_per_core[node_to_calc % num_cores]++;
+        
+        if( num_cores < nodes_per_layer_alias[i] )
+            max_threads = num_cores;
+        else
+            max_threads = nodes_per_layer_alias[i];
+
+        for( int thread_num = 0; thread_num < max_threads; thread_num++){
+
+            multithreading_nodes[thread_num].network = network;
+            multithreading_nodes[thread_num].min_max[1] = multithreading_nodes[thread_num].min_max[0] + calcs_per_core[thread_num];
+
+           if( thread_num != max_threads - 1 )
+                multithreading_nodes[thread_num + 1].min_max[0] = multithreading_nodes[thread_num].min_max[1];
+
+        }
 
         free( calcs_per_core );
 
     }
-    /*TODO: 1. Pass associated nodes for thread to evaluate through void *args
-            2. Summation of (prev_layer_nodes * linked_weights ) + associated bias
-            3. Perform sigmoid activation function if specified
+    /*TODO:
+            1. Summation of (prev_layer_nodes * linked_weights ) + associated bias
+            2. Perform sigmoid activation function if specified
     */
+
+    free( multithreading_nodes );
 
             
 }

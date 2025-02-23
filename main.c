@@ -36,9 +36,9 @@ int main(){
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * network->network_args->num_layers );
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
-    nodes_per_layer_alias[0] = 3;
-    nodes_per_layer_alias[1] = 8;
-    nodes_per_layer_alias[2] = 5;
+    nodes_per_layer_alias[0] = 5;
+    nodes_per_layer_alias[1] = 26;
+    nodes_per_layer_alias[2] = 1;
 
     network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * 3);
     enum activation_function* functions_alias = network->network_args->functions;

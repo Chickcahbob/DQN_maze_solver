@@ -31,6 +31,13 @@ struct network_t{
     struct num_values_t *num_values;
 };
 
+struct multithreading_nodes_t{
+
+    struct network_t *network;
+    int min_max[2];
+
+};
+
 struct num_values_t{
     int num_nodes_and_biases;
     int num_weights;
