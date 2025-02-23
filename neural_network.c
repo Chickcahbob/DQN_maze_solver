@@ -1,4 +1,5 @@
 #include "neural_network.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,6 +50,14 @@ void initialize_random_values(const struct network_values_t* network_values, con
 
 }
 
+void *thread_forward_prop( void *args ){
+
+    fprintf( stdout, "Thread Made!\n" );
+
+    return NULL;
+
+}
+
 void forward_prop( struct network_t* network){
 
     int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
@@ -61,6 +70,7 @@ void forward_prop( struct network_t* network){
     int max_threads;
 
     struct multithreading_nodes_t * multithreading_nodes = calloc(num_cores, sizeof(struct multithreading_nodes_t));
+    pthread_t threads[num_cores];
 
     for( int i = 0; i < num_layers_alias; i++ ){
 
@@ -81,6 +91,14 @@ void forward_prop( struct network_t* network){
 
            if( thread_num != max_threads - 1 )
                 multithreading_nodes[thread_num + 1].min_max[0] = multithreading_nodes[thread_num].min_max[1];
+
+           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *)multithreading_nodes);
+
+        }
+
+        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
+
+            pthread_join( threads[thread_num], NULL );
 
         }
 
