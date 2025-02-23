@@ -33,14 +33,16 @@ int main(){
     network->network_args->num_layers = 3;
     int num_layers_alias = network->network_args->num_layers;
 
-    network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * network->network_args->num_layers );
+    network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * num_layers_alias );
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
     nodes_per_layer_alias[0] = 5;
     nodes_per_layer_alias[1] = 26;
     nodes_per_layer_alias[2] = 1;
 
-    network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * 3);
+    network_init( network );
+
+    network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * network->num_values->num_nodes_and_biases);
     enum activation_function* functions_alias = network->network_args->functions;
 
     for( int i = 0; i < num_layers_alias; i++ ){
@@ -51,7 +53,6 @@ int main(){
             functions_alias[i] = _SIGMOID;
     }
 
-    network->network_values = network_init( network->network_args );
 
     forward_prop(network);
 

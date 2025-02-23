@@ -3,47 +3,47 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-struct network_values_t* network_init( struct network_args_t* network_args ){
+void network_init( struct network_t* network ){
 
-    struct network_values_t * network_values = (struct network_values_t *) malloc( sizeof( struct network_values_t ) );
+    network->network_values = (struct network_values_t *) malloc( sizeof( struct network_values_t ) );
+    network->num_values = (struct num_values_t *) malloc( sizeof( struct num_values_t ) );
 
-    struct num_values_t num_values = get_num_values( network_args );
+    get_num_values( network );
 
-    network_values->nodes = (float *) malloc( sizeof(float) * num_values.num_nodes_and_biases );
-    network_values->biases = (float *) malloc( sizeof(float) * num_values.num_nodes_and_biases);
-    network_values->weights = (float *) malloc( sizeof(float) * num_values.num_weights);
+    network->network_values->nodes = (float *) malloc( sizeof(float) * network->num_values->num_nodes_and_biases );
+    network->network_values->biases = (float *) malloc( sizeof(float) * network->num_values->num_nodes_and_biases);
+    network->network_values->weights = (float *) malloc( sizeof(float) * network->num_values->num_weights);
 
-    initialize_random_values(network_values, num_values, 0.4);
 
-    fprint_network( stdout, network_values, num_values);
+    initialize_random_values(network->network_values, network->num_values, 0.4);
 
-    return network_values;
+    fprint_network( stdout, network->network_values, network->num_values);
 
 }
 
-struct num_values_t get_num_values( struct network_args_t* network_args ){
+void get_num_values( struct network_t* network ){
 
-    struct num_values_t num_values;
-    num_values.num_nodes_and_biases = 0;
-    num_values.num_weights = 1;
+    network->num_values = (struct num_values_t*)malloc( sizeof( struct num_values_t) );
+    struct num_values_t *num_values_alias = network->num_values;
+    struct network_args_t *network_args_alias = network->network_args;
+    network->num_values->num_nodes_and_biases = 0;
+    network->num_values->num_weights = 1;
     
-    for( int i = 0; i < network_args->num_layers; i++ ){
-        num_values.num_nodes_and_biases += network_args->nodes_per_layer[i];
-        num_values.num_weights *= network_args->nodes_per_layer[i];
+    for( int i = 0; i < network_args_alias->num_layers; i++ ){
+        num_values_alias->num_nodes_and_biases += network_args_alias->nodes_per_layer[i];
+        num_values_alias->num_weights *= network_args_alias->nodes_per_layer[i];
     }
 
-    return num_values;
-
 }
 
-void initialize_random_values(const struct network_values_t* network_values, const struct num_values_t num_values, float max){
+void initialize_random_values(const struct network_values_t* network_values, const struct num_values_t *num_values, float max){
 
-    for( int i = 0; i < num_values.num_nodes_and_biases; i++ ){
+    for( int i = 0; i < num_values->num_nodes_and_biases; i++ ){
         network_values->nodes[i] = (float)rand()/(float)(RAND_MAX/max);
         network_values->biases[i] = (float)rand()/(float)(RAND_MAX/max);
     }
 
-    for( int i = 0; i < num_values.num_weights; i++ ){
+    for( int i = 0; i < num_values->num_weights; i++ ){
         network_values->weights[i] = (float)rand()/(float)(RAND_MAX/max);
     }
 
@@ -98,15 +98,15 @@ void forward_prop( struct network_t* network){
 }
 
 //Print current data stored in the network to specified output stream type
-void fprint_network( FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values){
+void fprint_network( FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t *num_values){
 
     fprintf( stream, "WEIGHTS: " );
 
-    for( int i = 0; i < num_values.num_weights; i++ ){
+    for( int i = 0; i < num_values->num_weights; i++ ){
 
         fprintf( stream, "%lf", network_values->weights[i] );
 
-        if( i != num_values.num_weights - 1 )
+        if( i != num_values->num_weights - 1 )
             fprintf( stream, ", " );
         else
             fprintf( stream, "\n\n" );
@@ -115,11 +115,11 @@ void fprint_network( FILE *__restrict stream, const struct network_values_t* net
 
     fprintf( stream, "BIASES: " );
 
-    for( int i = 0; i < num_values.num_nodes_and_biases; i++ ){
+    for( int i = 0; i < num_values->num_nodes_and_biases; i++ ){
 
         fprintf( stream, "%lf", network_values->biases[i] );
 
-        if( i != num_values.num_nodes_and_biases - 1 )
+        if( i != num_values->num_nodes_and_biases - 1 )
             fprintf( stream, ", " );
         else
             fprintf( stream, "\n\n" );
@@ -128,11 +128,11 @@ void fprint_network( FILE *__restrict stream, const struct network_values_t* net
     
     fprintf( stream, "CURRENT NODE OUTPUT: " );
 
-    for( int i = 0; i < num_values.num_nodes_and_biases; i++ ){
+    for( int i = 0; i < num_values->num_nodes_and_biases; i++ ){
 
         fprintf( stream, "%lf", network_values->nodes[i] );
 
-        if( i != num_values.num_nodes_and_biases - 1 )
+        if( i != num_values->num_nodes_and_biases - 1 )
             fprintf( stream, ", " );
         else
             fprintf( stream, "\n" );
@@ -171,6 +171,9 @@ void delete_network_args(struct network_args_t *network_args){
 }
 
 void delete_network( struct network_t *network ){
+
+    if( network->num_values != NULL )
+        free( network->num_values );
 
     if( network->network_args != NULL )
         delete_network_args( network->network_args );

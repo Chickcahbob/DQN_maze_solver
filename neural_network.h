@@ -44,19 +44,19 @@ struct num_values_t{
 };
 
 //Takes user definied network arguments to generate initial network values
-struct network_values_t* network_init( struct network_args_t* network_args );
+void network_init( struct network_t* network );
 
 //Gets the numver of weights, nodes, and biases in the network
-struct num_values_t get_num_values( struct network_args_t* network_args );
+void get_num_values( struct network_t* network );
 
 //Assigns random values to weights, nodes, and biases in the range [0,max]
-void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t num_values, float max);
+void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t *num_values, float max);
 
 //Subroutine to calculate forward propogation of node values
 void forward_prop( struct network_t *network );
 
 //Print weights, nodes, and biases to specified output stream
-void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t num_values);
+void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t *num_values);
 
 //Frees memory allocated for weights, nodes, and biases
 void delete_network_values( struct network_values_t* network_values );
