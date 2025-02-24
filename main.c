@@ -30,7 +30,7 @@ int main(){
 
     network->network_args = (struct network_args_t*) malloc( sizeof( struct network_args_t ) );
 
-    network->network_args->num_layers = 3;
+    network->network_args->num_layers = 5;
     int num_layers_alias = network->network_args->num_layers;
 
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * num_layers_alias );
@@ -38,19 +38,33 @@ int main(){
 
     nodes_per_layer_alias[0] = 3;
     nodes_per_layer_alias[1] = 2;
-    nodes_per_layer_alias[2] = 1;
+    nodes_per_layer_alias[2] = 4;
+    nodes_per_layer_alias[3] = 1;
+    nodes_per_layer_alias[4] = 3;
 
     network_init( network );
 
     network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * network->num_values->num_nodes_and_biases);
     enum activation_function* functions_alias = network->network_args->functions;
 
-    for( int i = 0; i < num_layers_alias; i++ ){
+    int layer_min = 0;
+    int layer_max;
 
-        if( i == num_layers_alias - 1 )
-            functions_alias[i] = _LINEAR;
-        else
-            functions_alias[i] = _SIGMOID;
+    for( int layer = 0; layer < num_layers_alias; layer++ ){
+
+        layer_max = layer_min + nodes_per_layer_alias[layer];
+
+        for( int function = layer_min; function < layer_max; function++ ){
+
+            if( layer != num_layers_alias - 1 )
+                functions_alias[function] = _LINEAR;
+            else
+                functions_alias[function] = _SIGMOID;
+
+        }
+
+        layer_min = layer_max;
+
     }
 
     forward_prop(network);

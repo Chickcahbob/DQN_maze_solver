@@ -1,8 +1,5 @@
 #include "neural_network.h"
-#include <pthread.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 void network_init( struct network_t* network ){
 
@@ -79,9 +76,17 @@ void *thread_forward_prop( void *args ){
                 values_alias->nodes[calc_node] += values_alias->nodes[prev_layer_node] * values_alias->weights[weight];
             }
 
-            if( values_alias->nodes[calc_node] > 1.0 )
-                values_alias->nodes[calc_node] = 1.0;
+        }
 
+        if( values_alias->nodes[calc_node] > 1.0 )
+            values_alias->nodes[calc_node] = 1.0;
+
+        switch( args_alias->functions[calc_node] ){
+            case _SIGMOID:
+                values_alias->nodes[calc_node] = 1 / ( 1 + expf(-4 * values_alias->nodes[calc_node]));
+                break;
+            case _LINEAR:
+                break;
         }
 
         weight_min = weight_max;
@@ -133,9 +138,7 @@ void forward_prop( struct network_t* network){
         }
 
         for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
-
             pthread_join( threads[thread_num], NULL );
-
         }
 
         free( calcs_per_core );
