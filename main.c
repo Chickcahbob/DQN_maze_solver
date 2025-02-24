@@ -6,6 +6,7 @@
 #include "movement.h"
 #include "keyboard.h"
 #include "neural_network.h"
+#include "dqn.h"
 
 int play( int height, int width );
 
@@ -69,10 +70,20 @@ int main(){
 
     forward_prop(network);
 
-    fprint_network( stdout, network->network_values, network->num_values);
+    struct network_t *target_network = NULL;
+
+    policy_to_target(network, &target_network);
+
+    if( target_network == NULL )
+        fprintf( stdout, "TARGET IS NULL!\n" );
+
+    fprint_network( stdout, target_network->network_values, target_network->num_values);
 
     if( network != NULL )
         delete_network( network );
+
+    if( target_network != NULL )
+        delete_network(target_network);
 
     return 0;
 
