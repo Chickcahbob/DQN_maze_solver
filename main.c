@@ -36,8 +36,8 @@ int main(){
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * num_layers_alias );
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
-    nodes_per_layer_alias[0] = 5;
-    nodes_per_layer_alias[1] = 26;
+    nodes_per_layer_alias[0] = 3;
+    nodes_per_layer_alias[1] = 2;
     nodes_per_layer_alias[2] = 1;
 
     network_init( network );
@@ -53,8 +53,9 @@ int main(){
             functions_alias[i] = _SIGMOID;
     }
 
-
     forward_prop(network);
+
+    fprint_network( stdout, network->network_values, network->num_values);
 
     if( network != NULL )
         delete_network( network );

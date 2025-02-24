@@ -35,6 +35,7 @@ struct multithreading_nodes_t{
 
     struct network_t *network;
     int min_max[2];
+    int current_layer;
 
 };
 

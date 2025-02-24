@@ -16,9 +16,9 @@ void network_init( struct network_t* network ){
     network->network_values->weights = (float *) malloc( sizeof(float) * network->num_values->num_weights);
 
 
-    initialize_random_values(network->network_values, network->num_values, 0.4);
+    initialize_random_values(network->network_values, network->num_values, 0.2);
 
-    fprint_network( stdout, network->network_values, network->num_values);
+    //fprint_network( stdout, network->network_values, network->num_values);
 
 }
 
@@ -52,7 +52,40 @@ void initialize_random_values(const struct network_values_t* network_values, con
 
 void *thread_forward_prop( void *args ){
 
-    fprintf( stdout, "Thread Made!\n" );
+    struct multithreading_nodes_t *thread_data = (struct multithreading_nodes_t *)args;
+    struct network_values_t *values_alias = thread_data->network->network_values;
+    struct network_args_t *args_alias = thread_data->network->network_args;
+
+    int prev_layer_base = 0;
+    int prev_layer_nodes = args_alias->nodes_per_layer[thread_data->current_layer - 1];
+    int weight_min = 1;
+    int weight_max;
+
+    for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
+        prev_layer_base += args_alias->nodes_per_layer[layer];
+        weight_min *= args_alias->nodes_per_layer[layer];
+    }
+
+    weight_min -= 1;
+
+    for( int calc_node = thread_data->min_max[0]; calc_node < thread_data->min_max[1]; calc_node++ ){
+
+        values_alias->nodes[calc_node] = values_alias->biases[calc_node];
+        weight_max = weight_min + prev_layer_nodes;
+
+        for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + prev_layer_nodes; prev_layer_node++ ){
+
+            for( int weight = weight_min; weight < weight_max; weight++ ){
+                values_alias->nodes[calc_node] += values_alias->nodes[prev_layer_node] * values_alias->weights[weight];
+            }
+
+            if( values_alias->nodes[calc_node] > 1.0 )
+                values_alias->nodes[calc_node] = 1.0;
+
+        }
+
+        weight_min = weight_max;
+    }
 
     return NULL;
 
@@ -72,28 +105,31 @@ void forward_prop( struct network_t* network){
     struct multithreading_nodes_t * multithreading_nodes = calloc(num_cores, sizeof(struct multithreading_nodes_t));
     pthread_t threads[num_cores];
 
-    for( int i = 0; i < num_layers_alias; i++ ){
+    int layer_base = network->network_args->nodes_per_layer[0];
+
+    for( int cur_layer = 1; cur_layer < num_layers_alias; cur_layer++ ){
 
         calcs_per_core = calloc( num_cores, sizeof(int) );
 
-        for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[i]; node_to_calc++ )
+        for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[cur_layer]; node_to_calc++ )
             calcs_per_core[node_to_calc % num_cores]++;
         
-        if( num_cores < nodes_per_layer_alias[i] )
+        if( num_cores < nodes_per_layer_alias[cur_layer] )
             max_threads = num_cores;
         else
-            max_threads = nodes_per_layer_alias[i];
+            max_threads = nodes_per_layer_alias[cur_layer];
 
         for( int thread_num = 0; thread_num < max_threads; thread_num++){
 
             multithreading_nodes[thread_num].network = network;
-            multithreading_nodes[thread_num].min_max[1] = multithreading_nodes[thread_num].min_max[0] + calcs_per_core[thread_num];
+            multithreading_nodes[thread_num].min_max[0] = layer_base;
+            multithreading_nodes[thread_num].min_max[1] = layer_base + calcs_per_core[thread_num];
+            multithreading_nodes[thread_num].current_layer = cur_layer;
 
-           if( thread_num != max_threads - 1 )
-                multithreading_nodes[thread_num + 1].min_max[0] = multithreading_nodes[thread_num].min_max[1];
 
-           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *)multithreading_nodes);
+           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &multithreading_nodes[thread_num]);
 
+           layer_base += calcs_per_core[thread_num];
         }
 
         for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
@@ -106,8 +142,7 @@ void forward_prop( struct network_t* network){
 
     }
     /*TODO:
-            1. Summation of (prev_layer_nodes * linked_weights ) + associated bias
-            2. Perform sigmoid activation function if specified
+            1. Perform sigmoid activation function if specified
     */
 
     free( multithreading_nodes );
