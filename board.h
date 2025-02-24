@@ -11,6 +11,15 @@ struct coords{
     int y;
 };
 
+enum board_location{
+
+    _AGENT,
+    _WALL,
+    _OBJECTIVE,
+    _EMPTY
+
+};
+
 char* create_board( int width, int height );
 
 void delete_board( char* board );
