@@ -85,6 +85,9 @@ void *thread_forward_prop( void *args ){
             case _SIGMOID:
                 values_alias->nodes[calc_node] = 1 / ( 1 + expf(-4 * values_alias->nodes[calc_node]));
                 break;
+            case _RELU:
+                if( values_alias->nodes[calc_node] < 0 )
+                    values_alias->nodes[calc_node] = 0;
             case _LINEAR:
                 break;
         }
@@ -144,9 +147,6 @@ void forward_prop( struct network_t* network){
         free( calcs_per_core );
 
     }
-    /*TODO:
-            1. Perform sigmoid activation function if specified
-    */
 
     free( multithreading_nodes );
 
