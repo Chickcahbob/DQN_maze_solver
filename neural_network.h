@@ -16,7 +16,8 @@ struct network_values_t{
 
 enum activation_function{
     _LINEAR,
-    _SIGMOID
+    _SIGMOID,
+    _RELU
 };
 
 struct network_args_t{
