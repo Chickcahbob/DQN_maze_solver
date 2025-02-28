@@ -1,42 +1,61 @@
 #include "board.h"
 
-char* create_board( int width, int height){
+enum board_location* create_board( int width, int height){
 
-    char* board = (char*)malloc( width * height * sizeof(char));
+    enum board_location* board = (enum board_location*)malloc( width * height * sizeof(enum board_location));
 
     int cur_location;
     for( int y = 0; y < height; y++ ){
         for( int x = 0; x < width; x++ ){
             cur_location = get_position( x, y, width );
             
-            *(board + cur_location) = '_';
+            *(board + cur_location) = _EMPTY;
 
         }
     }
 
     set_holes( board, width, height );
-    set_objective( board, width, height, 'O' );
-    set_objective( board, width, height, 'I' );
+    set_objective( board, width, height, _OBJECTIVE );
+    set_objective( board, width, height, _AGENT );
     return board;
 
 }
 
-void delete_board( char* board ){
+void delete_board( enum board_location* board ){
 
     free( board );
 
 }
 
-void print_board( char* board, int width, int height ){
+void print_board( enum board_location* board, int width, int height ){
 
     int cur_location;
+
+    char enum_to_char;
 
     for( int y = 0; y < height; y++ ){
         for( int x = 0; x < width; x++ ){
 
             cur_location = get_position( x, y, width );
 
-            fprintf( stdout, "%c", *(board + cur_location ) );
+            switch( *(board + cur_location) ){
+
+                case _AGENT:
+                    enum_to_char = 'I';
+                    break;
+                case _OBJECTIVE:
+                    enum_to_char = 'O';
+                    break;
+                case _HOLE:
+                    enum_to_char = 'H';
+                    break;
+                default:
+                    enum_to_char = '_';
+                    break;
+
+            }
+
+            fprintf( stdout, "%c",  enum_to_char );
         }
 
         fprintf( stdout, "\n" );
@@ -45,12 +64,12 @@ void print_board( char* board, int width, int height ){
 
 }
 
-int num_chars_near( char* board, int width, int height, int location, char search_char ){
+int num_values_near( enum board_location* board, int width, int height, int location, enum board_location search_value ){
 
-    int found_chars = 0;
+    int found_values = 0;
     int y_min, y_max, x_min, x_max, cur_search;
 
-    char cur_char;
+    char cur_value;
 
     struct coords coordinates = get_coordinates( location, width );
 
@@ -96,12 +115,12 @@ int num_chars_near( char* board, int width, int height, int location, char searc
         for( int x = x_min; x <=x_max; x++ ){
 
             cur_search = get_position( x, y, width );
-            cur_char = get_char( board, x, y, width );
+            cur_value = get_value( board, x, y, width );
 
             //fprintf( stdout, "Cur location = %d\n", cur_search );
             
-            if( cur_char == search_char && cur_search != location ){
-                found_chars++;
+            if( cur_value == search_value && cur_search != location ){
+                found_values++;
                 //set_char(board, i, j, x, 's' );
             }
 
@@ -109,26 +128,26 @@ int num_chars_near( char* board, int width, int height, int location, char searc
 
     }
 
-    return found_chars;
+    return found_values;
 
 
 }
 
-char get_char(char *board, int x, int y, int width){
+enum board_location get_value(enum board_location* board, int x, int y, int width){
 
-    char value = *(board + get_position(x, y, width) );
+    enum board_location value = *(board + get_position(x, y, width) );
 
     return value;
 
 }
 
-void set_char( char* board, int x, int y, int width, char value){
+void set_value( enum board_location* board, int x, int y, int width, enum board_location value){
 
     *(board + get_position( x, y, width ) ) = value;
 
 }
 
-void set_holes(char *board, int width, int height){
+void set_holes(enum board_location *board, int width, int height){
 
     int max_holes, holes_near, make_hole;
 
@@ -145,7 +164,7 @@ void set_holes(char *board, int width, int height){
                 max_holes--;
             }
 
-            holes_near = num_chars_near(board, width, height, get_position( x, y, width), 'H');
+            holes_near = num_values_near(board, width, height, get_position( x, y, width), _HOLE);
 
             if( holes_near < max_holes ){
 
@@ -153,7 +172,7 @@ void set_holes(char *board, int width, int height){
 
                 if( make_hole == 0 ){
 
-                    set_char( board, x, y, width, 'H' );
+                    set_value( board, x, y, width, _HOLE );
 
                 }
 
@@ -166,26 +185,26 @@ void set_holes(char *board, int width, int height){
 
 }
 
-void set_objective( char* board, int x, int y, char type){
+void set_objective( enum board_location* board, int x, int y, enum board_location type){
 
     int location_x = rand() % x;
     int location_y = rand() % y;
 
-    char cur_value = get_char(board, location_x, location_y, x);
+    char cur_value = get_value(board, location_x, location_y, x);
 
-    int objectives_near = num_chars_near(board, x, y, location_y * x + location_x, 'O');
+    int objectives_near = num_values_near(board, x, y, location_y * x + location_x, 'O');
 
-    while( cur_value == 'O' || cur_value == 'I' || objectives_near != 0 ){
+    while( cur_value == _OBJECTIVE || cur_value == _AGENT || objectives_near != 0 ){
 
         location_x = rand() % x;
         location_y = rand() % y;
 
-        cur_value = get_char(board, location_x, location_y, x);
-        objectives_near = num_chars_near(board, x, y, location_y * x + location_x, 'O');
+        cur_value = get_value(board, location_x, location_y, x);
+        objectives_near = num_values_near(board, x, y, location_y * x + location_x, _OBJECTIVE );
 
     }
 
-    set_char( board, location_x, location_y, x, type );
+    set_value( board, location_x, location_y, x, type );
 
 }
 

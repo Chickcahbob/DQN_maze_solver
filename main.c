@@ -17,17 +17,17 @@ int main(){
     const int height = 3;
     const int width = 3;
 
-    char *board = create_board(width, height);
+    enum board_location *board = create_board(width, height);
 
     print_board(board, width, height);
 
-    /*int completed = play( HEIGHT, WIDTH );
+    /*
+    int completed = play( height, width );
 
     if( completed == 1 )
         fprintf( stdout, "You win!\n" );
     else
         fprintf( stdout, "You lose.\n" ); 
-
     */
 
     struct network_t *network = (struct network_t*) malloc( sizeof(struct network_t) );
@@ -52,13 +52,13 @@ int main(){
 
         switch( board[node] ){
 
-            case 'I':
+            case _AGENT:
                 network->network_values->nodes[node] = 0.25;
                 break;
-            case 'O':
+            case _OBJECTIVE:
                 network->network_values->nodes[node] = 1;
                 break;
-            case 'H':
+            case _HOLE:
                 network->network_values->nodes[node] = -1;
                 break;
             default:
@@ -110,14 +110,17 @@ int main(){
     if( target_network != NULL )
         delete_network(target_network);
 
+    if( board )
+        delete_board(board);
+
     return 0;
 
 }
 
 int play( int height, int width ){
 
-    char stored_char = '0';
-    char* board = create_board( width, height );
+    enum board_location stored_value = _EMPTY;
+    enum board_location* board = create_board( width, height );
     int completed = -1;
 
     while( completed == -1 ){
@@ -126,11 +129,11 @@ int play( int height, int width ){
         print_board( board, width, height );
         fprintf( stdout, "Location of I: %d\n", get_agent_position( board, width, height ) );
 
-        stored_char = move(board, width, height, stored_char);
+        stored_value = move(board, width, height, stored_value);
 
-        if( stored_char == 'H' ){
+        if( stored_value == _HOLE ){
             completed = 0;
-        } else if ( stored_char == 'O' ){
+        } else if ( stored_value == _OBJECTIVE ){
             completed = 1;
         }
 

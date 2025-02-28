@@ -7,13 +7,13 @@
 #include "board.h"
 #include "keyboard.h"
 
-char move( char* board, int width, int height, char stored_char);
+enum board_location move( enum board_location* board, int width, int height, enum board_location stored_value);
 
-char move_up( char* board, int width, int height, char stored_char );
-char move_down( char* board, int width, int height, char stored_char );
-char move_right( char* board, int width, int height, char stored_char );
-char move_left( char* board, int width, int height, char stored_char );
+enum board_location move_up( enum board_location* board, int width, int height, enum board_location stored_value );
+enum board_location move_down( enum board_location* board, int width, int height, enum board_location stored_value );
+enum board_location move_right( enum board_location* board, int width, int height, enum board_location stored_value );
+enum board_location move_left( enum board_location* board, int width, int height, enum board_location stored_value );
 
-int get_agent_position( char* board, int width, int height );
+int get_agent_position( enum board_location* board, int width, int height );
 
 #endif

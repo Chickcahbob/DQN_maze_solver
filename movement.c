@@ -1,38 +1,39 @@
 #include "movement.h"
+#include "board.h"
 
-char move( char* board, int width, int height, char stored_char){
+enum board_location move( enum board_location* board, int width, int height, enum board_location stored_value){
 
     char movement_direction = get_direction();
-    char next_stored_char = '0';
+    enum board_location next_stored_value = _EMPTY;
 
     if( movement_direction == '0' )
-        return next_stored_char;
+        return next_stored_value;
 
     switch( movement_direction ){
 
         case 'A':
-            next_stored_char = move_up(board, width, height, stored_char);
+            next_stored_value = move_up(board, width, height, stored_value);
             break;
 
         case 'B':
-            next_stored_char = move_down(board, width, height, stored_char);
+            next_stored_value = move_down(board, width, height, stored_value);
             break;
 
         case 'C':
-            next_stored_char = move_right(board, width, height, stored_char);
+            next_stored_value = move_right(board, width, height, stored_value);
             break;
         
         case 'D':
-            next_stored_char = move_left(board, width, height, stored_char);
+            next_stored_value = move_left(board, width, height, stored_value);
             break;
 
     }
 
-    return next_stored_char;
+    return next_stored_value;
 
 }
 
-char move_up( char* board, int width, int height, char stored_char ){
+enum board_location move_up( enum board_location* board, int width, int height, enum board_location stored_value ){
 
     int agent_position = get_agent_position( board, width, height );
     struct coords agent_coords = get_coordinates(agent_position, width);
@@ -40,20 +41,20 @@ char move_up( char* board, int width, int height, char stored_char ){
     if( agent_coords.y == 0 )
         return '0';
 
-    char new_stored_char = get_char(board, agent_coords.x, agent_coords.y - 1, width);
+    enum board_location new_stored_value = get_value(board, agent_coords.x, agent_coords.y - 1, width);
 
-    set_char(board, agent_coords.x, agent_coords.y - 1, width, 'I');
+    set_value(board, agent_coords.x, agent_coords.y - 1, width, _AGENT);
 
-    if( stored_char != '0' )
-        set_char( board, agent_coords.x, agent_coords.y, width, stored_char );
+    if( stored_value != '0' )
+        set_value( board, agent_coords.x, agent_coords.y, width, stored_value );
     else
-        set_char( board, agent_coords.x, agent_coords.y, width, '_' );
+        set_value( board, agent_coords.x, agent_coords.y, width, _EMPTY );
 
-    return new_stored_char;
+    return new_stored_value;
     
 }
 
-char move_down( char* board, int width, int height, char stored_char ){
+enum board_location move_down( enum board_location* board, int width, int height, enum board_location stored_value ){
 
     int agent_position = get_agent_position( board, width, height );
     struct coords agent_coords = get_coordinates(agent_position, width);
@@ -61,20 +62,20 @@ char move_down( char* board, int width, int height, char stored_char ){
     if( agent_coords.y == height - 1 )
         return '0';
 
-    char new_stored_char = get_char(board, agent_coords.x, agent_coords.y + 1, width);
+    enum board_location new_stored_value = get_value(board, agent_coords.x, agent_coords.y + 1, width);
 
-    set_char(board, agent_coords.x, agent_coords.y + 1, width, 'I');
+    set_value(board, agent_coords.x, agent_coords.y + 1, width, _AGENT);
 
-    if( stored_char != '0' )
-        set_char( board, agent_coords.x, agent_coords.y, width, stored_char );
+    if( stored_value != '0' )
+        set_value( board, agent_coords.x, agent_coords.y, width, stored_value );
     else
-        set_char( board, agent_coords.x, agent_coords.y, width, '_' );
+        set_value( board, agent_coords.x, agent_coords.y, width, _EMPTY );
 
-    return new_stored_char;
+    return new_stored_value;
     
 }
 
-char move_right( char* board, int width, int height, char stored_char ){
+enum board_location move_right( enum board_location* board, int width, int height, enum board_location stored_value ){
 
     int agent_position = get_agent_position( board, width, height );
     struct coords agent_coords = get_coordinates(agent_position, width);
@@ -82,20 +83,20 @@ char move_right( char* board, int width, int height, char stored_char ){
     if( agent_coords.x == width - 1 )
         return '0';
 
-    char new_stored_char = get_char(board, agent_coords.x + 1, agent_coords.y, width);
+    enum board_location new_stored_value = get_value(board, agent_coords.x + 1, agent_coords.y, width);
 
-    set_char(board, agent_coords.x + 1, agent_coords.y, width, 'I');
+    set_value(board, agent_coords.x + 1, agent_coords.y, width, _AGENT);
 
-    if( stored_char != '0' )
-        set_char( board, agent_coords.x, agent_coords.y, width, stored_char );
+    if( stored_value != '0' )
+        set_value( board, agent_coords.x, agent_coords.y, width, stored_value );
     else
-        set_char( board, agent_coords.x, agent_coords.y, width, '_' );
+        set_value( board, agent_coords.x, agent_coords.y, width, _EMPTY );
 
-    return new_stored_char;
+    return new_stored_value;
     
 }
 
-char move_left( char* board, int width, int height, char stored_char ){
+enum board_location move_left( enum board_location* board, int width, int height, enum board_location stored_value ){
 
     int agent_position = get_agent_position( board, width, height );
     struct coords agent_coords = get_coordinates(agent_position, width);
@@ -103,14 +104,14 @@ char move_left( char* board, int width, int height, char stored_char ){
     if( agent_coords.x == 0 )
         return '0';
 
-    char new_stored_char = get_char(board, agent_coords.x - 1, agent_coords.y, width);
+    enum board_location new_stored_char = get_value(board, agent_coords.x - 1, agent_coords.y, width);
 
-    set_char(board, agent_coords.x - 1, agent_coords.y, width, 'I');
+    set_value(board, agent_coords.x - 1, agent_coords.y, width, _AGENT);
 
-    if( stored_char != '0' )
-        set_char( board, agent_coords.x, agent_coords.y, width, stored_char );
+    if( stored_value != '0' )
+        set_value( board, agent_coords.x, agent_coords.y, width, stored_value );
     else
-        set_char( board, agent_coords.x, agent_coords.y, width, '_' );
+        set_value( board, agent_coords.x, agent_coords.y, width, _EMPTY );
 
     return new_stored_char;
     
@@ -118,7 +119,7 @@ char move_left( char* board, int width, int height, char stored_char ){
 
 
 
-int get_agent_position( char* board, int width, int height ){
+int get_agent_position( enum board_location* board, int width, int height ){
 
     int agent_position = 0;
     bool agent_found = false;
@@ -128,7 +129,7 @@ int get_agent_position( char* board, int width, int height ){
 
     while( agent_found == false ){
 
-        if( get_char(board, x, y, width) == 'I'){
+        if( get_value(board, x, y, width) == _AGENT){
 
             agent_found = true;
 

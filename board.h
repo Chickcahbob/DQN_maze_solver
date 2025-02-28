@@ -14,27 +14,27 @@ struct coords{
 enum board_location{
 
     _AGENT,
-    _WALL,
+    _HOLE,
     _OBJECTIVE,
     _EMPTY
 
 };
 
-char* create_board( int width, int height );
+enum board_location* create_board( int width, int height );
 
-void delete_board( char* board );
+void delete_board( enum board_location* board );
 
-void print_board( char* board, int width, int height );
+void print_board( enum board_location* board, int width, int height );
 
-int num_chars_near( char* board, int width, int height, int location, char search_char );
+int num_values_near( enum board_location* board, int width, int height, int location, enum board_location search_value );
 
-char get_char( char* board, int x, int y, int width );
+enum board_location get_value( enum board_location* board, int x, int y, int width );
 
-void set_char( char* board, int x, int y, int width, char value );
+void set_value( enum board_location* board, int x, int y, int width, enum board_location value );
 
-void set_holes( char* board, int width, int height );
+void set_holes( enum board_location* board, int width, int height );
 
-void set_objective( char* board, int width, int height, char type );
+void set_objective( enum board_location* board, int width, int height, enum board_location type );
 
 struct coords get_coordinates( int position, int width );
 
