@@ -4,8 +4,6 @@ char* create_board( int width, int height){
 
     char* board = (char*)malloc( width * height * sizeof(char));
 
-    fprintf( stdout, "Board created at %p\n", (void*)board );
-
     int cur_location;
     for( int y = 0; y < height; y++ ){
         for( int x = 0; x < width; x++ ){

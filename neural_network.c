@@ -36,13 +36,15 @@ void get_num_values( struct network_t* network ){
 
 void initialize_random_values(const struct network_values_t* network_values, const struct num_values_t *num_values, float max){
 
+    float abs_range = max * 2;
+
     for( int i = 0; i < num_values->num_nodes_and_biases; i++ ){
-        network_values->nodes[i] = (float)rand()/(float)(RAND_MAX/max);
-        network_values->biases[i] = (float)rand()/(float)(RAND_MAX/max);
+        network_values->nodes[i] = (float)rand()/(float)(RAND_MAX/abs_range) - max;
+        network_values->biases[i] = (float)rand()/(float)(RAND_MAX/abs_range) - max;
     }
 
     for( int i = 0; i < num_values->num_weights; i++ ){
-        network_values->weights[i] = (float)rand()/(float)(RAND_MAX/max);
+        network_values->weights[i] = (float)rand()/(float)(RAND_MAX/abs_range) - max;
     }
 
 }

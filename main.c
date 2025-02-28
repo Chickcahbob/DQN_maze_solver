@@ -14,9 +14,12 @@ int main(){
 
     srand(time(NULL));
 
-    const int height = 10;
-    const int width = 8;
+    const int height = 3;
+    const int width = 3;
 
+    char *board = create_board(width, height);
+
+    print_board(board, width, height);
 
     /*int completed = play( HEIGHT, WIDTH );
 
@@ -37,7 +40,7 @@ int main(){
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * num_layers_alias );
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
-    nodes_per_layer_alias[0] = 3;
+    nodes_per_layer_alias[0] = width * height;
     nodes_per_layer_alias[1] = 2;
     nodes_per_layer_alias[2] = 4;
     nodes_per_layer_alias[3] = 1;
@@ -45,8 +48,30 @@ int main(){
 
     network_init( network );
 
+    for( int node = 0; node < nodes_per_layer_alias[0]; node++ ){
+
+        switch( board[node] ){
+
+            case 'I':
+                network->network_values->nodes[node] = 0.25;
+                break;
+            case 'O':
+                network->network_values->nodes[node] = 1;
+                break;
+            case 'H':
+                network->network_values->nodes[node] = -1;
+                break;
+            default:
+                network->network_values->nodes[node] = 0;
+                break;
+
+        }
+
+    }
+
     network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * network->num_values->num_nodes_and_biases);
     enum activation_function* functions_alias = network->network_args->functions;
+
 
     int layer_min = 0;
     int layer_max;
