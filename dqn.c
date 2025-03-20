@@ -1,6 +1,4 @@
 #include "dqn.h"
-#include "neural_network.h"
-#include <stdlib.h>
 
 void policy_to_target(const struct network_t* policy_network, struct network_t** target_network){
 
