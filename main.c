@@ -97,7 +97,7 @@ int main(){
     // END OF NETOWQRK INITIALIZATION
 
 
-    // Sample forward propogation
+    // Sample forward propagation
     forward_prop(network);
 
     struct network_t *target_network = NULL;
