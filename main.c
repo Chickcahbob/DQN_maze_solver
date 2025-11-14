@@ -30,6 +30,7 @@ int main(){
         fprintf( stdout, "You lose.\n" ); 
     */
 
+    // START NETWORK INITIALIZATION
     struct network_t *network = (struct network_t*) malloc( sizeof(struct network_t) );
 
     network->network_args = (struct network_args_t*) malloc( sizeof( struct network_args_t ) );
@@ -44,7 +45,7 @@ int main(){
     nodes_per_layer_alias[1] = 2;
     nodes_per_layer_alias[2] = 4;
     nodes_per_layer_alias[3] = 1;
-    nodes_per_layer_alias[4] = 3;
+    nodes_per_layer_alias[4] = 4; //should be ouptut layer?
 
     network_init( network );
 
@@ -93,6 +94,10 @@ int main(){
 
     }
 
+    // END OF NETOWQRK INITIALIZATION
+
+
+    // Sample forward propogation
     forward_prop(network);
 
     struct network_t *target_network = NULL;
