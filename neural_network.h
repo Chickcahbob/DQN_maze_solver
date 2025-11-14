@@ -8,12 +8,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-struct network_values_t{
-   float *nodes;
-   float *biases;
-   float *weights;
-};
-
 enum activation_function{
     _LINEAR,
     _SIGMOID,
@@ -24,6 +18,17 @@ struct network_args_t{
     int num_layers;
     int *nodes_per_layer;
     enum activation_function* functions;
+};
+
+struct num_values_t{
+    int num_nodes_and_biases;
+    int num_weights;
+};
+
+struct network_values_t{
+   float *nodes;
+   float *biases;
+   float *weights;
 };
 
 struct network_t{
@@ -38,11 +43,6 @@ struct multithreading_nodes_t{
     int min_max[2];
     int current_layer;
 
-};
-
-struct num_values_t{
-    int num_nodes_and_biases;
-    int num_weights;
 };
 
 //Takes user definied network arguments to generate initial network values
