@@ -243,3 +243,18 @@ void delete_network( struct network_t *network ){
         free( network );
 
 }
+
+int last_layer_start_index( struct network_args_t* network_args ){
+    int index = 0;
+    for( int layer = 0; layer < (network_args->num_layers - 1); layer++ ){
+        index += network_args->nodes_per_layer[layer];
+    }
+
+    return index;
+
+}
+
+void error_calculation( struct network_t* network, float* targets ){
+    
+
+}

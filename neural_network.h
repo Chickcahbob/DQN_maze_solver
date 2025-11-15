@@ -72,4 +72,10 @@ void delete_network_args( struct network_args_t* network_network_args );
 //Frees memory allocated for network
 void delete_network( struct network_t *network );
 
+//Returns the starting index of the last layer
+int last_layer_start_index( struct network_args_t* network_args );
+
+//Compares prediction values to target values
+void error_calculation( struct network_t* network, float* targets );
+
 #endif
