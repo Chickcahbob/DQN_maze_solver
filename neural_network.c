@@ -1,6 +1,4 @@
 #include "neural_network.h"
-#include <math.h>
-#include <stdio.h>
 
 void network_init( struct network_t* network ){
 
@@ -276,10 +274,7 @@ int error_calculation( struct network_t* network, struct targets_t* targets ){
 
    struct layer_index_range layer_range = last_layer_start_index(network->network_args); 
 
-    if( targets->num_targets != (layer_range.max - layer_range.min ) ){
-        fprintf( stdout, "Num Targets: %d | Num Values: %d\n", targets->num_targets, layer_range.max - layer_range.min );
-        return 1;
-    }
+   assert( targets->num_targets == (layer_range.max - layer_range.min) );
 
     float raw_error;
     float rms_error;

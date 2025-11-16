@@ -52,7 +52,7 @@ int main(){
 
     //Create initial Q table values equivalent to baord's initial state
     struct targets_t* targets = (struct targets_t*) malloc( sizeof(struct targets_t) );
-    targets->num_targets = width * height;
+    targets->num_targets = 4;
     targets_init( targets );
 
     for( int node = 0; node < nodes_per_layer_alias[0]; node++ ){
@@ -77,7 +77,6 @@ int main(){
 
         }
 
-        targets->target_values[node] = network->network_values->nodes[node];
 
     }
 
