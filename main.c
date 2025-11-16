@@ -50,12 +50,14 @@ int main(){
 
     network_init( network );
 
-    struct q_table* table = (struct q_table*) malloc( sizeof( struct q_table) );
-
     //Create initial Q table values equivalent to baord's initial state
     struct targets_t* targets = (struct targets_t*) malloc( sizeof(struct targets_t) );
     targets->num_targets = 4;
     targets_init( targets );
+
+    struct q_table* table = (struct q_table*) malloc( sizeof( struct q_table) );
+    table->rows = height * width;
+    table->columns = targets->num_targets;
 
     for( int node = 0; node < nodes_per_layer_alias[0]; node++ ){
 
