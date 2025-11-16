@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
 #include "board.h"
 #include "movement.h"
 #include "keyboard.h"

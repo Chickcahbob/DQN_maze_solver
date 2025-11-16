@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <assert.h>
 
 enum activation_function{
     _LINEAR,
