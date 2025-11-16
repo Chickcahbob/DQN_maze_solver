@@ -49,6 +49,11 @@ int main(){
 
     network_init( network );
 
+    //Create initial Q table values equivalent to baord's initial state
+    struct targets_t* targets = (struct targets_t*) malloc( sizeof(struct targets_t) );
+    targets->num_targets = width * height;
+    targets_init( targets );
+
     for( int node = 0; node < nodes_per_layer_alias[0]; node++ ){
 
         switch( board[node] ){
@@ -62,11 +67,16 @@ int main(){
             case _HOLE:
                 network->network_values->nodes[node] = -1;
                 break;
+            case _EMPTY:
+                network->network_values->nodes[node] = 0;
+                break;
             default:
                 network->network_values->nodes[node] = 0;
                 break;
 
         }
+
+        targets->target_values[node] = network->network_values->nodes[node];
 
     }
 
@@ -109,11 +119,18 @@ int main(){
 
     fprint_network( stdout, target_network->network_values, target_network->num_values);
 
+    struct layer_index_range test = last_layer_start_index(target_network->network_args);
+
+    error_calculation(target_network, targets);
+
     if( network != NULL )
         delete_network( network );
 
     if( target_network != NULL )
         delete_network(target_network);
+
+    if( targets != NULL )
+        delete_targets( targets );
 
     if( board )
         delete_board(board);

@@ -1,4 +1,5 @@
 #include "neural_network.h"
+#include <math.h>
 #include <stdio.h>
 
 void network_init( struct network_t* network ){
@@ -17,6 +18,10 @@ void network_init( struct network_t* network ){
 
     //fprint_network( stdout, network->network_values, network->num_values);
 
+}
+
+void targets_init( struct targets_t* targets){
+    targets->target_values = (float *) malloc( sizeof(float) * targets->num_targets );
 }
 
 void get_num_values( struct network_t* network ){
@@ -244,17 +249,46 @@ void delete_network( struct network_t *network ){
 
 }
 
-int last_layer_start_index( struct network_args_t* network_args ){
-    int index = 0;
-    for( int layer = 0; layer < (network_args->num_layers - 1); layer++ ){
-        index += network_args->nodes_per_layer[layer];
+void delete_targets( struct targets_t *targets){
+    if( targets->target_values != NULL ){
+        free( targets->target_values );
     }
-
-    return index;
 
 }
 
-void error_calculation( struct network_t* network, float* targets ){
-    
+struct layer_index_range last_layer_start_index( struct network_args_t* network_args ){
+    struct layer_index_range layer_range;
+    layer_range.min = 0;
+
+    int layer = 0;
+    while( layer < (network_args->num_layers - 1 )){
+        layer_range.min += network_args->nodes_per_layer[layer];
+        layer++;
+    }
+
+    layer_range.max = layer_range.min + network_args->nodes_per_layer[layer];
+
+    return layer_range;
+
+}
+
+int error_calculation( struct network_t* network, struct targets_t* targets ){
+
+   struct layer_index_range layer_range = last_layer_start_index(network->network_args); 
+
+    if( targets->num_targets != (layer_range.max - layer_range.min ) ){
+        fprintf( stdout, "Num Targets: %d | Num Values: %d\n", targets->num_targets, layer_range.max - layer_range.min );
+        return 1;
+    }
+
+    float raw_error;
+    float rms_error;
+    for( int target_index = 0; target_index < targets->num_targets; target_index++ ){
+        raw_error = targets->target_values[target_index] - network->network_values->nodes[target_index + layer_range.min];
+        rms_error = sqrtf(raw_error * raw_error);
+        fprintf( stdout, "Output %d Error: Raw-%f RMS-%f\n", target_index, raw_error, rms_error );
+    }
+
+   return 0;
 
 }

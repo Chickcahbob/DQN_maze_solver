@@ -14,6 +14,11 @@ enum activation_function{
     _RELU
 };
 
+struct layer_index_range{
+    int min;
+    int max;
+};
+
 struct network_args_t{
     int num_layers;
     int *nodes_per_layer;
@@ -45,8 +50,15 @@ struct multithreading_nodes_t{
 
 };
 
+struct targets_t{
+    int num_targets;
+    float *target_values;
+};
+
 //Takes user definied network arguments to generate initial network values
 void network_init( struct network_t* network );
+
+void targets_init( struct targets_t* targets );
 
 //Gets the numver of weights, nodes, and biases in the network
 void get_num_values( struct network_t* network );
@@ -72,10 +84,12 @@ void delete_network_args( struct network_args_t* network_network_args );
 //Frees memory allocated for network
 void delete_network( struct network_t *network );
 
+void delete_targets( struct targets_t *targets );
+
 //Returns the starting index of the last layer
-int last_layer_start_index( struct network_args_t* network_args );
+struct layer_index_range last_layer_start_index( struct network_args_t* network_args );
 
 //Compares prediction values to target values
-void error_calculation( struct network_t* network, float* targets );
+int error_calculation( struct network_t* network, struct targets_t* targets );
 
 #endif
