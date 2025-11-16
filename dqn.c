@@ -42,3 +42,19 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
     (*target_network)->num_values->num_nodes_and_biases = policy_network->num_values->num_nodes_and_biases;
 
 }
+
+void q_table_init( struct q_table* table ){
+
+    assert( table != NULL );
+    int table_size = table->rows * table->columns;
+    table->values = (float *) malloc( sizeof(float) * table_size );
+}
+
+void delete_q_table( struct q_table* table ){
+    assert( table != NULL );
+    if( table->values != NULL )
+        free( table->values );
+
+    free( table );
+    
+}

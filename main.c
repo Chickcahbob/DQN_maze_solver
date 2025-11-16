@@ -50,6 +50,8 @@ int main(){
 
     network_init( network );
 
+    struct q_table* table = (struct q_table*) malloc( sizeof( struct q_table) );
+
     //Create initial Q table values equivalent to baord's initial state
     struct targets_t* targets = (struct targets_t*) malloc( sizeof(struct targets_t) );
     targets->num_targets = 4;
@@ -76,7 +78,6 @@ int main(){
                 break;
 
         }
-
 
     }
 
@@ -131,6 +132,9 @@ int main(){
 
     if( targets != NULL )
         delete_targets( targets );
+
+    if( table != NULL )
+        delete_q_table( table );
 
     if( board )
         delete_board(board);
