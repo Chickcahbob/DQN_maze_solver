@@ -13,8 +13,6 @@ struct q_table{
 
 void policy_to_target( const struct network_t *policy_network, struct network_t** target_network );
 
-void q_table_init( struct q_table* table );
-
-void delete_q_table( struct q_table* table );
+float dqn_loss( struct network_t *policy_network, struct network_t* target_network );
 
 #endif

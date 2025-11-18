@@ -1,4 +1,5 @@
 #include "dqn.h"
+#include "neural_network.h"
 
 void policy_to_target(const struct network_t* policy_network, struct network_t** target_network){
 
@@ -43,24 +44,29 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
 
 }
 
-void q_table_init( struct q_table* table ){
 
-    assert( table != NULL );
-    table->values = (float *) malloc( sizeof(float) * table_size( table ));
+float dqn_loss( struct network_t* policy_network, struct network_t* target_network){
 
-}
+    struct targets_t* targets = (struct targets_t*) malloc( sizeof( struct targets_t ) );
+    forward_prop( target_network );
 
-int table_size( struct q_table* table ){
-    assert( table != NULL );
-    int table_size = table->rows * table->columns;
-    return table_size;
-}
+    struct layer_index_range target_indexs = last_layer_start_index( target_network->network_args );
 
-void delete_q_table( struct q_table* table ){
-    assert( table != NULL );
-    if( table->values != NULL )
-        free( table->values );
+    targets->num_targets = target_indexs.max - target_indexs.min;
 
-    free( table );
-    
+    targets_init( targets );
+
+    assert( targets->target_values != NULL );
+
+    for( int i = 0; i < targets->num_targets; i++ ){
+
+        targets->target_values[i] = target_network->network_values->nodes[i + target_indexs.min];
+    }
+
+    error_calculation( policy_network, targets );
+
+    delete_targets( targets );
+
+    free( targets);
+
 }
