@@ -67,6 +67,6 @@ float dqn_loss( struct network_t* policy_network, struct network_t* target_netwo
 
     delete_targets( targets );
 
-    free( targets);
+    free( targets );
 
 }
