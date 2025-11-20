@@ -9,8 +9,6 @@
 #include "neural_network.h"
 #include "dqn.h"
 
-int play( int height, int width );
-
 int main(){
 
     srand(time(NULL));
@@ -155,8 +153,7 @@ int play( int height, int width ){
     system( "clear" );
     print_board( board, width, height );
 
-    if( board != NULL )
-        delete_board( board );
+    delete_board( board );
 
     return completed;
 

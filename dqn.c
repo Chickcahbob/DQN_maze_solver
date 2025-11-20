@@ -44,6 +44,82 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
 
 }
 
+int initialize_replay_data( struct replay_data_t* head, int num_state_inputs, float* state_inputs, int action, float reward ){
+
+    struct replay_data_t* iterator = head;
+    struct replay_data_t* replay_data = NULL;
+
+    int index = 0;
+
+    if( iterator != NULL ){
+        while( iterator->next != NULL ){
+            iterator = iterator->next;
+            index++;
+        }
+
+        iterator->next = replay_data;
+    } else {
+        replay_data = iterator;
+    }
+
+    assert( replay_data == NULL );
+
+    replay_data = (struct replay_data_t *) malloc( sizeof( struct replay_data_t ) );
+
+    replay_data->next = NULL;
+
+    replay_data->num_state_values = num_state_inputs;
+
+    replay_data->state_values = (float *) malloc( sizeof( float ) * num_state_inputs);
+
+    replay_data->state_values = state_inputs;
+
+    replay_data->action = action;
+
+    replay_data->reward = reward;
+
+    return index;
+
+}
+
+struct replay_data_t* sample_replay_data( struct replay_data_t* head, int index ){
+
+    struct replay_data_t* iterator = head;
+
+    int i = 0;
+
+    while( i < index ){
+        if( iterator->next == NULL ){
+            fprintf( stdout, "ERROR: Provided index: %d is greater than linked list size: %d.\n", index, i );
+           return NULL; 
+        } else {
+            iterator = iterator->next;
+        }
+        i++;
+    }
+
+    assert( iterator != NULL );
+
+    return iterator;
+
+}
+
+int delete_replay_data(struct replay_data_t *replay_data){
+
+    if( replay_data == NULL )
+        return 1;
+
+    if( replay_data->state_values != NULL){
+        free( replay_data->state_values );
+        replay_data->state_values = NULL;
+    }
+
+    free( replay_data );
+    replay_data = NULL;
+
+    return 0;
+
+}
 
 float dqn_loss( struct network_t* policy_network, struct network_t* target_network){
 
@@ -66,7 +142,5 @@ float dqn_loss( struct network_t* policy_network, struct network_t* target_netwo
     error_calculation( policy_network, targets );
 
     delete_targets( targets );
-
-    free( targets );
 
 }

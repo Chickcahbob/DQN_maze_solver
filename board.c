@@ -26,7 +26,7 @@ void delete_board( enum board_location* board ){
     if( board != NULL ){
         free( board );
         board = NULL;
-    }:
+    }
 
 }
 
