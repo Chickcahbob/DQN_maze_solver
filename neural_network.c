@@ -1,4 +1,5 @@
 #include "neural_network.h"
+#include <sched.h>
 
 void network_init( struct network_t* network ){
 
@@ -204,52 +205,81 @@ void fprint_network( FILE *__restrict stream, const struct network_values_t* net
 
 void delete_network_values( struct network_values_t* network_values ){
 
-    if( network_values->nodes != NULL )
+    if( network_values->nodes != NULL ){
         free(network_values->nodes);
+        network_values->nodes = NULL;
+    }
 
-    if( network_values->weights != NULL )
+    if( network_values->weights != NULL ){
         free(network_values->weights);
+        network_values->weights = NULL;
+    }
 
-    if( network_values->biases != NULL )
+    if( network_values->biases != NULL ){
         free(network_values->biases);
+        network_values->biases = NULL;
+    }
 
-    if( network_values != NULL )
+
+    if( network_values != NULL ){
         free( network_values );
+        network_values = NULL;
+    }
 
 }
 
 void delete_network_args(struct network_args_t *network_args){
 
-    if( network_args->nodes_per_layer != NULL )
+    if( network_args->nodes_per_layer != NULL ){
         free( network_args->nodes_per_layer );
+        network_args->nodes_per_layer = NULL;
+    }
 
-    if( network_args->functions != NULL )
+    if( network_args->functions != NULL ){
         free( network_args->functions );
+        network_args->functions = NULL;
+    }
 
-    if( network_args != NULL )
+    if( network_args != NULL ){
         free( network_args );
+        network_args = NULL;
+    }
 
 }
 
 void delete_network( struct network_t *network ){
 
-    if( network->num_values != NULL )
+    if( network->num_values != NULL ){
         free( network->num_values );
+        network->num_values = NULL;
+    }
 
-    if( network->network_args != NULL )
+    if( network->network_args != NULL ){
         delete_network_args( network->network_args );
+        network->network_args = NULL;
+    }
 
-    if( network->network_values != NULL )
+    if( network->network_values != NULL ){
         delete_network_values( network->network_values);
+        network->network_values = NULL;
+    }
 
-    if( network != NULL )
+    if( network != NULL ){
         free( network );
+        network = NULL;
+    }
 
 }
 
 void delete_targets( struct targets_t *targets){
     if( targets->target_values != NULL ){
         free( targets->target_values );
+        targets->target_values = NULL;
+    }
+
+    if( targets != NULL ){
+        free( targets );
+        targets = NULL;
     }
 
 }
