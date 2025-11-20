@@ -23,7 +23,10 @@ enum board_location* create_board( int width, int height){
 
 void delete_board( enum board_location* board ){
 
-    free( board );
+    if( board != NULL ){
+        free( board );
+        board = NULL;
+    }:
 
 }
 
