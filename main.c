@@ -117,15 +117,16 @@ int main(){
 
     //Creating first replay data struct as null to initialize linked list
     fprint_network( stdout, network->network_values, network->num_values);
-    struct replay_data_t* head = NULL;
 
     float reward = 0.5;
 
-    int index = initialize_replay_data( &head, board_size , state_inputs, nn_action, reward);
-    fprintf( stdout, "First action = %d\n", nn_action );
-    assert( head != NULL );
-    index = initialize_replay_data( &head, board_size , state_inputs, nn_action, reward);
+    struct replay_data_t* head = initialize_replay_data(board_size, state_inputs, nn_action, reward);
 
+    forward_prop(network);
+
+    struct replay_data_t* next_replay = initialize_replay_data(board_size, state_inputs,  nn_action, reward);
+
+    int index = append_replay_data(head, next_replay );
 
     struct replay_data_t* sample = sample_replay_data( head, index);
 
@@ -142,6 +143,9 @@ int main(){
     dqn_loss( network, target_network );
 
     struct layer_index_range test = last_layer_start_index(target_network->network_args);
+
+    if( head != NULL )
+        delete_replay_ll(head);
 
     if( network != NULL )
         delete_network( network );

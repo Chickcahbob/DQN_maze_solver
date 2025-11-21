@@ -44,43 +44,48 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
 
 }
 
-int initialize_replay_data( struct replay_data_t** head, int num_state_inputs, float* state_inputs, int action, float reward ){
+struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float  reward ){
 
-    struct replay_data_t** iterator = head;
-    struct replay_data_t** replay_data = NULL;
+    struct replay_data_t* tmp_replay_data = (struct replay_data_t*) malloc( sizeof( struct replay_data_t ) );
+
+    tmp_replay_data->num_state_values = num_states;
+    tmp_replay_data->state_values = (float*) malloc( sizeof( float ) * num_states );
+
+    tmp_replay_data->reward = reward;
+    tmp_replay_data->action = action;
+    tmp_replay_data->next = NULL;
+
+    return tmp_replay_data;
+
+}
+
+int append_replay_data( struct replay_data_t* head, struct replay_data_t* latest_replay_data ){
+
+    if( head == NULL ){
+        fprintf( stdout, "ERROR: Attempting to set head of replay data linked list to NULL in append_replay_data(). Use initialize_replay_data() to allocate memory.\n" );
+        return -1;
+    }
+
+    if( latest_replay_data == NULL ){
+        fprintf( stdout, "ERROR: Attempting to insert NULL value into replay data linked list. Use initialize_replay_data() to allocate memory.\n" );
+        return -1;
+    }
+
+    struct replay_data_t* iterator = head;
 
     int index = 0;
 
-    if( (*iterator) != NULL ){
-        fprintf( stdout, "No error here...\n" );
-        while( (*iterator)->next != NULL ){
-            (*iterator) = (*iterator)->next;
-            index++;
-        }
+    while( iterator->next != NULL ){
 
-        (*iterator)->next = (*replay_data);
-    } else {
-        replay_data = iterator;
+        iterator = iterator->next;
+        index++;
+
     }
 
-    assert( (*replay_data) == NULL );
-    (*replay_data) = (struct replay_data_t *) malloc( sizeof( struct replay_data_t ) );
-    assert( (*replay_data) != NULL );
-
-    (*replay_data)->next = NULL;
-
-    (*replay_data)->num_state_values = num_state_inputs;
-
-    (*replay_data)->state_values = (float *) malloc( sizeof( float ) * num_state_inputs);
-
-    (*replay_data)->state_values = state_inputs;
-
-    (*replay_data)->action = action;
-
-    (*replay_data)->reward = reward;
+    iterator->next = latest_replay_data;
 
     return index;
-
+    
 }
 
 struct replay_data_t* sample_replay_data( struct replay_data_t* head, int index ){
@@ -118,6 +123,27 @@ int delete_replay_data(struct replay_data_t *replay_data){
     free( replay_data );
     replay_data = NULL;
 
+    return 0;
+
+}
+
+int delete_replay_ll( struct replay_data_t* head ){
+
+    if( head == NULL ){
+        fprintf( stdout, "ERROR: Attempting to set head of replay data linked list to NULL in delete_replay_ll(). Use initialize_replay_data() to allocate memory.\n" );
+        return -1;
+    }
+ 
+    struct replay_data_t* iterator = head;
+    struct replay_data_t* iterator_next = NULL;
+
+    while( iterator->next != NULL ){
+        iterator_next = iterator->next;
+        delete_replay_data(iterator);
+        iterator = iterator_next;
+    }
+    iterator_next = iterator->next;
+    
     return 0;
 
 }
