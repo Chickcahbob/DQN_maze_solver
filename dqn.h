@@ -18,7 +18,7 @@ struct replay_data_t{
 };
 
 // Returns length of linked list after appending to end
-int initialize_replay_data( struct replay_data_t* head, int num_state_inputs, float* state_inputs, int action, float reward );
+int initialize_replay_data( struct replay_data_t** head, int num_state_inputs, float* state_inputs, int action, float reward );
 
 struct replay_data_t* sample_replay_data( struct replay_data_t* head, int index );
 

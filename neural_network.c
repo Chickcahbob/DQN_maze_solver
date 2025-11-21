@@ -203,6 +203,39 @@ void fprint_network( FILE *__restrict stream, const struct network_values_t* net
 
 }
 
+int select_action( struct network_t* network){
+
+    struct layer_index_range last_layer;
+
+    struct network_values_t* network_values_ptr = network->network_values;
+
+    last_layer = last_layer_start_index( network->network_args );
+
+    int layer_range = last_layer.max - last_layer.min;
+
+    int action = 0;
+    
+    //Asserts the network has an output layer
+    assert( layer_range != 0 );
+
+    //If the output layer is one node then it selects the only action available
+    if( layer_range == 1 )
+        return action;
+
+    float greatest_output = network_values_ptr->nodes[last_layer.min];
+
+    for( int output_i = last_layer.min + 1; output_i < last_layer.max; output_i++ ){
+
+        if( network_values_ptr->nodes[output_i] > greatest_output ){
+            greatest_output = network_values_ptr->nodes[output_i];
+            action = output_i - last_layer.min;
+        }
+    }
+
+    return action;
+
+}
+
 void delete_network_values( struct network_values_t* network_values ){
 
     if( network_values->nodes != NULL ){

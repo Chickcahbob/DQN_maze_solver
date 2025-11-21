@@ -16,6 +16,8 @@ int main(){
     const int height = 3;
     const int width = 3;
 
+    const int board_size = width * height;
+
     enum board_location *board = create_board(width, height);
 
     print_board(board, width, height);
@@ -40,7 +42,7 @@ int main(){
     network->network_args->nodes_per_layer = (int *) malloc( sizeof( int ) * num_layers_alias );
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
 
-    nodes_per_layer_alias[0] = width * height;
+    nodes_per_layer_alias[0] = board_size;
     nodes_per_layer_alias[1] = 2;
     nodes_per_layer_alias[2] = 4;
     nodes_per_layer_alias[3] = 1;
@@ -48,29 +50,38 @@ int main(){
 
     network_init( network );
 
-    for( int node = 0; node < nodes_per_layer_alias[0]; node++ ){
+    //Training loop start
+    float * state_inputs = (float*) malloc( sizeof( float ) * board_size);
+
+    for( int node = 0; node < board_size; node++ ){
 
         switch( board[node] ){
 
             case _AGENT:
                 network->network_values->nodes[node] = 0.25;
+                state_inputs[node] = 0.25;
                 break;
             case _OBJECTIVE:
                 network->network_values->nodes[node] = 1;
+                state_inputs[node] = 1;
                 break;
             case _HOLE:
                 network->network_values->nodes[node] = -1;
+                state_inputs[node] = -1;
                 break;
             case _EMPTY:
                 network->network_values->nodes[node] = 0;
+                state_inputs[node] = 0;
                 break;
             default:
                 network->network_values->nodes[node] = 0;
+                state_inputs[node] = 0;
                 break;
 
         }
 
     }
+
 
     network->network_args->functions = (enum activation_function*)malloc(sizeof(enum activation_function) * network->num_values->num_nodes_and_biases);
     enum activation_function* functions_alias = network->network_args->functions;
@@ -102,6 +113,24 @@ int main(){
     // Sample forward propagation
     forward_prop(network);
 
+    int nn_action = select_action( network );
+
+    //Creating first replay data struct as null to initialize linked list
+    fprint_network( stdout, network->network_values, network->num_values);
+    struct replay_data_t* head = NULL;
+
+    float reward = 0.5;
+
+    int index = initialize_replay_data( &head, board_size , state_inputs, nn_action, reward);
+    fprintf( stdout, "First action = %d\n", nn_action );
+    assert( head != NULL );
+    index = initialize_replay_data( &head, board_size , state_inputs, nn_action, reward);
+
+
+    struct replay_data_t* sample = sample_replay_data( head, index);
+
+    fprintf( stdout, "Sample data reward = %f\n", sample->reward );
+
     struct network_t *target_network = NULL;
 
     policy_to_target(network, &target_network);
@@ -109,7 +138,6 @@ int main(){
     assert( target_network != NULL );
 
 
-    //fprint_network( stdout, target_network->network_values, target_network->num_values);
     
     dqn_loss( network, target_network );
 

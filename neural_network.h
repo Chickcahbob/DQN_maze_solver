@@ -59,6 +59,7 @@ struct targets_t{
 //Takes user definied network arguments to generate initial network values
 void network_init( struct network_t* network );
 
+//Initializes random values for network output targets
 void targets_init( struct targets_t* targets );
 
 //Gets the numver of weights, nodes, and biases in the network
@@ -72,6 +73,9 @@ void forward_prop( struct network_t *network );
 
 //Subroutine for forward propogation
 void *thread_foward_prop( void *args );
+
+//Returns the action with the greatest float value
+int select_action( struct network_t* network);
 
 //Print weights, nodes, and biases to specified output stream
 void fprint_network(FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t *num_values);
