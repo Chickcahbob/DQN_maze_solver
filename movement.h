@@ -16,5 +16,6 @@ enum board_location move_right( enum board_location* board, int width, int heigh
 enum board_location move_left( enum board_location* board, int width, int height, enum board_location stored_value );
 
 int get_agent_position( enum board_location* board, int width, int height );
+int user_play( int height, int width );
 
 #endif
