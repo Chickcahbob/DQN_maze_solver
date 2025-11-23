@@ -1,15 +1,13 @@
 #include "movement.h"
-#include "board.h"
 
-enum board_location move( enum board_location* board, int width, int height, enum board_location stored_value){
+enum board_location move( enum board_location* board, int width, int height, enum board_location stored_value, char direction){
 
-    char movement_direction = get_direction();
     enum board_location next_stored_value = _EMPTY;
 
-    if( movement_direction == '0' )
+    if( direction == '0' )
         return next_stored_value;
 
-    switch( movement_direction ){
+    switch( direction ){
 
         case 'A':
             next_stored_value = move_up(board, width, height, stored_value);
@@ -152,33 +150,4 @@ int get_agent_position( enum board_location* board, int width, int height ){
 
 }
 
-int user_play( int height, int width ){
 
-    enum board_location stored_value = _EMPTY;
-    enum board_location* board = create_board( width, height );
-    int completed = -1;
-
-    while( completed == -1 ){
-
-        system("clear");
-        print_board( board, width, height );
-        fprintf( stdout, "Location of I: %d\n", get_agent_position( board, width, height ) );
-
-        stored_value = move(board, width, height, stored_value);
-
-        if( stored_value == _HOLE ){
-            completed = 0;
-        } else if ( stored_value == _OBJECTIVE ){
-            completed = 1;
-        }
-
-    }
-
-    system( "clear" );
-    print_board( board, width, height );
-
-    delete_board( board );
-
-    return completed;
-
-}

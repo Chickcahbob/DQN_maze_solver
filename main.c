@@ -8,6 +8,7 @@
 #include "keyboard.h"
 #include "neural_network.h"
 #include "dqn.h"
+#include "game.h"
 
 int main(){
 
@@ -23,7 +24,7 @@ int main(){
     print_board(board, width, height);
 
     /*
-    int completed = user_play( height, width );
+    int completed = play( height, width );
 
     if( completed == 1 )
         fprintf( stdout, "You win!\n" );
