@@ -11,6 +11,10 @@
 #include "dqn.h"
 
 
-int play( int height, int width, bool ai );
+int user_play( int width, int height );
+
+int ai_play( int width, int height );
+
+enum board_location selection_translate( enum board_location* board, enum board_location stored_value, int height, int width, int action );
 
 #endif
