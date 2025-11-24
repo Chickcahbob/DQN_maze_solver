@@ -46,17 +46,23 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
 
 struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float reward, float* next_state_inputs ){
 
-    struct replay_data_t* tmp_replay_data = (struct replay_data_t*) malloc( sizeof( struct replay_data_t ) );
+    struct replay_data_t* replay_data = (struct replay_data_t*) malloc( sizeof( struct replay_data_t ) );
 
-    tmp_replay_data->num_state_values = num_states;
-    tmp_replay_data->state_values = (float*) malloc( sizeof( float ) * num_states );
-    tmp_replay_data->next_state_values = (float*) malloc( sizeof( float ) * num_states );
+    replay_data->num_state_values = num_states;
+    replay_data->state_values = (float*) malloc( sizeof( float ) * num_states );
+    replay_data->next_state_values = (float*) malloc( sizeof( float ) * num_states );
 
-    tmp_replay_data->reward = reward;
-    tmp_replay_data->action = action;
-    tmp_replay_data->next = NULL;
+    replay_data->reward = reward;
+    replay_data->action = action;
+    replay_data->next = NULL;
 
-    return tmp_replay_data;
+    for( int i = 0; i < replay_data->num_state_values; i++ ){
+
+        replay_data->state_values[i] = state_inputs[i];
+        replay_data->next_state_values[i] = next_state_inputs[i];
+
+    }
+    return replay_data;
 
 }
 
@@ -150,7 +156,7 @@ int delete_replay_ll( struct replay_data_t* head ){
 
 }
 
-float dqn_loss( struct network_t* policy_network, struct network_t* target_network){
+/*float dqn_loss( struct network_t* policy_network, struct network_t* target_network){
 
     struct targets_t* targets = (struct targets_t*) malloc( sizeof( struct targets_t ) );
     forward_prop( target_network );
@@ -172,11 +178,26 @@ float dqn_loss( struct network_t* policy_network, struct network_t* target_netwo
 
     delete_targets( targets );
 
+}*/
+
+float discrete_dqn_loss( float policy_network_prediction, float target_reward ){
+
+    float dqn_loss = ( target_reward - policy_network_prediction );
+    dqn_loss = dqn_loss * dqn_loss;
+
+    return dqn_loss;
+
 }
 
 float bellman_equation( float immediate_reward, float discount_factor, float next_reward ){
 
     float target_reward = immediate_reward + (discount_factor * next_reward );
+
+    if( target_reward > 1 )
+        target_reward = 1;
+
+    if( target_reward < -1 )
+        target_reward = -1;
 
     return target_reward;
 

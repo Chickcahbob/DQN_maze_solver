@@ -104,7 +104,7 @@ int ai_play( int width, int height ){
 
     // START TRAINING LOOP
     // TODO: Put this into it's own function
-    float discout_factor = 0.25;
+    float discount_factor = 0.01;
 
     struct network_t* target_network = NULL;
 
@@ -116,7 +116,7 @@ int ai_play( int width, int height ){
     struct replay_data_t* next_replay;
     struct replay_data_t* sample;
 
-    float reward;
+    float reward, target_value;
     int replay_index = 0;
     int sample_index = 0;
 
@@ -143,19 +143,23 @@ int ai_play( int width, int height ){
 
         state_inputs = convert_inputs( board, board_size, network );
 
-        print_board(board, width, height);
-        // START REPLAY CREATION
+        //print_board(board, width, height);
+
+        // GENERATE NEW REPLAY DATA
+
+        //fprintf( stdout, "GENERATING NEW REPLAY DATA\n" );
         forward_prop(network);
         nn_action = select_action( network );
 
         save_board(&prev_board, board, width, height);
 
         next_location = selection_translate(  board, stored_value, height, width, nn_action );
+        //fprintf( stdout, "Movement\n" );
+        //print_board(board, width, height);
 
         reward = convert_reward(next_location);
 
         next_state_inputs = convert_inputs(board, board_size, target_network);
-
 
         if( head == NULL ){
             head = initialize_replay_data(board_size, state_inputs, nn_action, reward, next_state_inputs);
@@ -164,12 +168,16 @@ int ai_play( int width, int height ){
             replay_index = append_replay_data(head, next_replay );
         }
 
+        // SELECT RANDOM REPLAY DATA
+
         sample_index = rand() % ( replay_index + 1 );
 
-        fprintf( stdout, "Selecting replay %d of %d\n", sample_index + 1, replay_index + 1 );
+        fprintf( stdout, "REPLAYING %d OF %d\n", sample_index + 1, replay_index + 1 );
 
         sample = sample_replay_data( head, sample_index);
-        //fprintf( stdout, "Sample data reward = %f\n", sample->reward );
+        fprintf( stdout, "Sample data reward = %f\n", sample->reward );
+        reconstruct_board(board, sample->state_values, board_size);
+        print_board(board, width, height);
         
         load_inputs(sample->next_state_values, target_network );
 
@@ -177,7 +185,17 @@ int ai_play( int width, int height ){
 
         tn_action = select_action( target_network );
 
+        reconstruct_board(board, sample->next_state_values, board_size);
+        stored_value = previous_move(sample->reward);
+
+        fprintf( stdout, "TARGET NETWORK TAKING NEXT STEP\n" );
+        next_location = selection_translate( board, stored_value, height, width, tn_action );
+
+        target_value = bellman_equation(sample->reward, discount_factor, reward);
+
         print_board(board, width, height);
+
+        fprintf( stdout, "Target value from Bellman Equation: %f\n", target_value );
 
         free( state_inputs );
         free( next_state_inputs );
@@ -283,6 +301,10 @@ float convert_reward( enum board_location next_location ){
         case _HOLE:
             reward = -1;
             break;
+        case _AGENT:
+            reward = -0.25;
+            break;
+ 
         default:
             reward = 0;
             break;
@@ -290,4 +312,39 @@ float convert_reward( enum board_location next_location ){
 
     return reward;
 
+}
+
+void reconstruct_board( enum board_location* board, float* state_inputs, int board_size ){
+
+    for( int i = 0; i < board_size; i++ ){
+
+        if( state_inputs[i] == -1 ){
+            board[i] = _HOLE;
+        } else if ( state_inputs[i] == 0.25 ){
+            board[i] = _AGENT;
+        } else if ( state_inputs[i] == 1 ){
+            board[i] = _OBJECTIVE;
+        } else {
+            board[i] = _EMPTY;
+        }
+    }
+
+}
+
+enum board_location previous_move( float prev_reward ){
+
+    enum board_location prev_move;
+
+    if( prev_reward == -1 ){
+        prev_move = _HOLE;
+    } else if ( prev_reward == 0.25 ){
+        prev_move = _AGENT;
+    } else if ( prev_reward == 1 ){
+        prev_move = _OBJECTIVE;
+    } else {
+        prev_move = _EMPTY;
+    }
+
+
+    return prev_move;
 }

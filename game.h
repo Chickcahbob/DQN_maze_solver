@@ -21,4 +21,7 @@ float* convert_inputs( enum board_location* board, int board_size, struct networ
 
 float convert_reward( enum board_location next_location );
 
+void reconstruct_board( enum board_location* board, float* state_inputs, int board_size );
+
+enum board_location previous_move( float prev_reward );
 #endif
