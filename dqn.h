@@ -12,13 +12,14 @@ struct replay_data_t{
     float action;
     float reward;
     float *state_values;
+    float *next_state_values;
 
     struct replay_data_t* next;
 
 };
 
 
-struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float  reward );
+struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float  reward, float* next_state_inputs );
 
 // Returns length of linked list after appending to end
 int append_replay_data( struct replay_data_t* head, struct replay_data_t* latest_replay_data );

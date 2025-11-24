@@ -44,12 +44,13 @@ void policy_to_target(const struct network_t* policy_network, struct network_t**
 
 }
 
-struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float  reward ){
+struct replay_data_t* initialize_replay_data( int num_states, float* state_inputs, int action, float reward, float* next_state_inputs ){
 
     struct replay_data_t* tmp_replay_data = (struct replay_data_t*) malloc( sizeof( struct replay_data_t ) );
 
     tmp_replay_data->num_state_values = num_states;
     tmp_replay_data->state_values = (float*) malloc( sizeof( float ) * num_states );
+    tmp_replay_data->next_state_values = (float*) malloc( sizeof( float ) * num_states );
 
     tmp_replay_data->reward = reward;
     tmp_replay_data->action = action;

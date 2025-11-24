@@ -105,78 +105,58 @@ int ai_play( int width, int height ){
     // START TRAINING LOOP
     // TODO: Put this into it's own function
     int i = 0;
+    struct network_t* target_network = NULL;
 
     enum board_location stored_value, next_location;
     enum board_location* board = NULL;
-    struct replay_data_t* head;
+    enum board_location* prev_board = NULL;
+
+    struct replay_data_t* head = NULL;
     struct replay_data_t* next_replay;
     struct replay_data_t* sample;
 
-    head = NULL;
     float reward;
     int replay_index = 0;
     int sample_index = 0;
 
-    while( i == 0 ){
+    float* state_inputs;
+    float* next_state_inputs;
+
+    int target_update_rounds = 2;
+
+    while( i < 3 ){
+
+        fprintf( stdout, "########### TRAINING ROUND: %d ##########\n", i );
+        if( i % target_update_rounds == 0 ){
+            policy_to_target( network, &target_network );
+
+            fprintf( stdout, "POLICY NETWORK UPDATED\n");
+        }
 
         stored_value = _EMPTY;
         board = create_board( width, height);
         assert( board != NULL );
 
-        float * state_inputs = (float*) malloc( sizeof( float ) * board_size);
+        state_inputs = convert_inputs( board, board_size, network );
 
-        for( int node = 0; node < board_size; node++ ){
-
-            switch( board[node] ){
-
-                case _AGENT:
-                    network->network_values->nodes[node] = 0.25;
-                    state_inputs[node] = 0.25;
-                    break;
-                case _OBJECTIVE:
-                    network->network_values->nodes[node] = 1;
-                    state_inputs[node] = 1;
-                    break;
-                case _HOLE:
-                    network->network_values->nodes[node] = -1;
-                    state_inputs[node] = -1;
-                    break;
-                case _EMPTY:
-                    network->network_values->nodes[node] = 0;
-                    state_inputs[node] = 0;
-                    break;
-                default:
-                    network->network_values->nodes[node] = 0;
-                    state_inputs[node] = 0;
-                    break;
-
-            }
-
-        }
         print_board(board, width, height);
         // START REPLAY CREATION
         forward_prop(network);
         int nn_action = select_action( network );
 
+        save_board(&prev_board, board, width, height);
+
         next_location = selection_translate(  board, stored_value, height, width, nn_action );
 
-        switch( next_location ){
-            case _OBJECTIVE:
-                reward = 1;
-                break;
-            case _HOLE:
-                reward = -1;
-                break;
-            default:
-                reward = 0;
-                break;
- 
-        }
+        reward = convert_reward(next_location);
+
+        next_state_inputs = convert_inputs(board, board_size, target_network);
+
 
         if( head == NULL ){
-            head = initialize_replay_data(board_size, state_inputs, nn_action, reward);
+            head = initialize_replay_data(board_size, state_inputs, nn_action, reward, next_state_inputs);
         } else {
-            next_replay = initialize_replay_data(board_size, state_inputs, nn_action, reward);
+            next_replay = initialize_replay_data(board_size, state_inputs, nn_action, reward, next_state_inputs);
             replay_index = append_replay_data(head, next_replay );
 
         }
@@ -184,20 +164,32 @@ int ai_play( int width, int height ){
         sample_index = rand() % ( replay_index + 1 );
 
         sample = sample_replay_data( head, sample_index);
-        fprintf( stdout, "Sample data reward = %f\n", sample->reward );
+        //fprintf( stdout, "Sample data reward = %f\n", sample->reward );
 
         print_board(board, width, height);
-        delete_board( board );
-        i = 1;
+
+        free( state_inputs );
+        free( next_state_inputs );
+
+        if( board != NULL )
+            delete_board( board );
+
+        if( prev_board != NULL )
+            delete_board( prev_board );
+
+        i++;
     }
     // END TRAINING LOOP
     
     //STRART MEMORY CLEANING
-      if( head != NULL )
+    if( head != NULL )
         delete_replay_ll(head);
 
     if( network != NULL )
         delete_network( network );
+    
+    if( target_network != NULL )
+        delete_network( target_network );
 
     return completed;
 }
@@ -231,4 +223,60 @@ enum board_location selection_translate( enum board_location* board, enum board_
 
     return next_location;
     
+}
+
+float* convert_inputs( enum board_location* board, int board_size, struct network_t* network ){
+
+    float* inputs = (float*) malloc( sizeof( float ) * board_size);
+
+    for( int node = 0; node < board_size; node++ ){
+
+        switch( board[node] ){
+
+            case _AGENT:
+                network->network_values->nodes[node] = 0.25;
+                inputs[node] = 0.25;
+                break;
+            case _OBJECTIVE:
+                network->network_values->nodes[node] = 1;
+                inputs[node] = 1;
+                break;
+            case _HOLE:
+                network->network_values->nodes[node] = -1;
+                inputs[node] = -1;
+                break;
+            case _EMPTY:
+                network->network_values->nodes[node] = 0;
+                inputs[node] = 0;
+                break;
+            default:
+                network->network_values->nodes[node] = 0;
+                inputs[node] = 0;
+                break;
+
+        }
+
+    }
+
+    return inputs;
+
+}
+
+float convert_reward( enum board_location next_location ){
+    float reward;
+
+    switch( next_location ){
+        case _OBJECTIVE:
+            reward = 1;
+            break;
+        case _HOLE:
+            reward = -1;
+            break;
+        default:
+            reward = 0;
+            break;
+    }
+
+    return reward;
+
 }

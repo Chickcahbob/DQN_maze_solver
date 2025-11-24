@@ -21,6 +21,26 @@ enum board_location* create_board( int width, int height){
 
 }
 
+int save_board( enum board_location** backup_board, enum board_location* board, int width, int height){
+
+    int success = 1;
+    enum board_location tmp;
+    (*backup_board) = (enum board_location*) malloc( sizeof( enum board_location) * width * height );
+
+    for( int y = 0; y < height; y++ ){
+        for( int x = 0; x < width; x++ ){
+            tmp = get_value(board, x, y, width);
+            set_value((*backup_board), x, y, width, tmp);
+
+        }
+    }
+
+    if( backup_board != NULL )
+        success = 0;
+
+    return success;
+}
+
 void delete_board( enum board_location* board ){
 
     if( board != NULL ){

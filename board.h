@@ -23,6 +23,8 @@ enum board_location{
 
 enum board_location* create_board( int width, int height );
 
+int save_board( enum board_location** backup_board, enum board_location* board, int width, int height);
+
 void delete_board( enum board_location* board );
 
 void print_board( enum board_location* board, int width, int height );
