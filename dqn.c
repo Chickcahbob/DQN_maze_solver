@@ -82,6 +82,7 @@ int append_replay_data( struct replay_data_t* head, struct replay_data_t* latest
         index++;
 
     }
+    index++;
 
     iterator->next = latest_replay_data;
 
