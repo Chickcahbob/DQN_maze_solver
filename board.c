@@ -246,4 +246,5 @@ int get_position(int x, int y, int width){
 
     int position = y * width + x;
 
+    return position;
 }

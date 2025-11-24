@@ -116,7 +116,7 @@ int ai_play( int width, int height ){
     struct replay_data_t* next_replay;
     struct replay_data_t* sample;
 
-    float reward, target_value;
+    float reward, target_value, dqn_loss;
     int replay_index = 0;
     int sample_index = 0;
 
@@ -128,7 +128,7 @@ int ai_play( int width, int height ){
     int nn_action, tn_action;
 
     int i = 0;
-    while( i < 3 ){
+    while( i < 100 ){
 
         fprintf( stdout, "########### TRAINING ROUND: %d ##########\n", i );
         if( i % target_update_rounds == 0 ){
@@ -143,19 +143,19 @@ int ai_play( int width, int height ){
 
         state_inputs = convert_inputs( board, board_size, network );
 
-        //print_board(board, width, height);
+        print_board(board, width, height);
 
         // GENERATE NEW REPLAY DATA
 
-        //fprintf( stdout, "GENERATING NEW REPLAY DATA\n" );
+        fprintf( stdout, "GENERATING NEW REPLAY DATA\n" );
         forward_prop(network);
         nn_action = select_action( network );
 
         save_board(&prev_board, board, width, height);
 
         next_location = selection_translate(  board, stored_value, height, width, nn_action );
-        //fprintf( stdout, "Movement\n" );
-        //print_board(board, width, height);
+        fprintf( stdout, "Movement\n" );
+        print_board(board, width, height);
 
         reward = convert_reward(next_location);
 
@@ -190,21 +190,39 @@ int ai_play( int width, int height ){
 
         fprintf( stdout, "TARGET NETWORK TAKING NEXT STEP\n" );
         next_location = selection_translate( board, stored_value, height, width, tn_action );
+        reward = convert_reward(next_location);
 
         target_value = bellman_equation(sample->reward, discount_factor, reward);
 
+        reconstruct_board(board, sample->state_values, board_size);
+        stored_value = _EMPTY;
+
+        load_inputs(sample->state_values, network);
+        forward_prop(network);
+
+        nn_action = select_action(network);
+
+        next_location = selection_translate( board, stored_value, height, width, tn_action );
+        reward = convert_reward(next_location);
+
+        dqn_loss = discrete_dqn_loss(reward, target_value);
+
         print_board(board, width, height);
 
-        fprintf( stdout, "Target value from Bellman Equation: %f\n", target_value );
+        fprintf( stdout, "Network Reward: %f Bellman Equation: %f Loss Function (MSE): %f\n", reward, target_value, dqn_loss );
 
         free( state_inputs );
         free( next_state_inputs );
 
-        if( board != NULL )
+        if( board != NULL ){
             delete_board( board );
+            board = NULL;
+        }
 
-        if( prev_board != NULL )
+        if( prev_board != NULL ){
             delete_board( prev_board );
+            prev_board = NULL;
+        }
 
         i++;
     }
