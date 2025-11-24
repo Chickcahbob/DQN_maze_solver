@@ -104,7 +104,8 @@ int ai_play( int width, int height ){
 
     // START TRAINING LOOP
     // TODO: Put this into it's own function
-    int i = 0;
+    float discout_factor = 0.25;
+
     struct network_t* target_network = NULL;
 
     enum board_location stored_value, next_location;
@@ -124,6 +125,7 @@ int ai_play( int width, int height ){
 
     int target_update_rounds = 2;
 
+    int i = 0;
     while( i < 3 ){
 
         fprintf( stdout, "########### TRAINING ROUND: %d ##########\n", i );
@@ -158,10 +160,11 @@ int ai_play( int width, int height ){
         } else {
             next_replay = initialize_replay_data(board_size, state_inputs, nn_action, reward, next_state_inputs);
             replay_index = append_replay_data(head, next_replay );
-
         }
 
         sample_index = rand() % ( replay_index + 1 );
+
+        fprintf( stdout, "Selecting replay %d of %d\n", sample_index + 1, replay_index + 1 );
 
         sample = sample_replay_data( head, sample_index);
         //fprintf( stdout, "Sample data reward = %f\n", sample->reward );
