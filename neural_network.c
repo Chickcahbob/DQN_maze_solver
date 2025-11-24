@@ -350,3 +350,23 @@ int error_calculation( struct network_t* network, struct targets_t* targets ){
    return 0;
 
 }
+
+int load_inputs( float* inputs, struct network_t* network){
+
+    int success = 1;
+
+    assert( network != NULL );
+    assert( network->network_values != NULL );
+    assert( network->network_values->nodes != NULL );
+
+    for( int index = 0; index < network->network_args->nodes_per_layer[0]; index++ ){
+
+        network->network_values->nodes[index] = inputs[index];
+
+    }
+
+    success = 0;
+
+    return success;
+
+}

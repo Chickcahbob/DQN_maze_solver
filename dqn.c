@@ -173,3 +173,11 @@ float dqn_loss( struct network_t* policy_network, struct network_t* target_netwo
     delete_targets( targets );
 
 }
+
+float bellman_equation( float immediate_reward, float discount_factor, float next_reward ){
+
+    float target_reward = immediate_reward + (discount_factor * next_reward );
+
+    return target_reward;
+
+}

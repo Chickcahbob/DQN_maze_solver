@@ -125,6 +125,8 @@ int ai_play( int width, int height ){
 
     int target_update_rounds = 2;
 
+    int nn_action, tn_action;
+
     int i = 0;
     while( i < 3 ){
 
@@ -144,7 +146,7 @@ int ai_play( int width, int height ){
         print_board(board, width, height);
         // START REPLAY CREATION
         forward_prop(network);
-        int nn_action = select_action( network );
+        nn_action = select_action( network );
 
         save_board(&prev_board, board, width, height);
 
@@ -168,6 +170,12 @@ int ai_play( int width, int height ){
 
         sample = sample_replay_data( head, sample_index);
         //fprintf( stdout, "Sample data reward = %f\n", sample->reward );
+        
+        load_inputs(sample->next_state_values, target_network );
+
+        forward_prop( target_network );
+
+        tn_action = select_action( target_network );
 
         print_board(board, width, height);
 

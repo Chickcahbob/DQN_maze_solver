@@ -97,4 +97,6 @@ struct layer_index_range last_layer_start_index( struct network_args_t* network_
 //Compares prediction values to target values
 int error_calculation( struct network_t* network, struct targets_t* targets );
 
+int load_inputs( float* inputs, struct network_t* network);
+
 #endif
