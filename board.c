@@ -17,6 +17,8 @@ enum board_location* create_board( int width, int height){
         }
     }
 
+    int tree_test = generate_tree( board, height, width);
+    assert( tree_test == 0 );
     return board;
 
 }
@@ -33,8 +35,22 @@ int generate_tree( enum board_location* board, int height, int width){
 
     struct coords_ll* head = initialize_coords();
 
-    int start_x = rand() % num_x;
-    int start_y = rand() % num_y;
+    head->values.x = rand()  % num_x;
+    head->values.y = rand()  % num_y;
+
+    set_value(board, head->values.x, head->values.y, width, _EMPTY);
+
+    struct coords_ll* next = initialize_coords();
+
+    next->values.x = rand()  % num_x;
+    next->values.y = rand()  % num_y;
+
+    set_value(board, next->values.x, next->values.y, width, _EMPTY);
+
+    delete_coords_ll(&head);
+
+    success = 0;
+    assert( head == NULL );
 
     return success;
 }

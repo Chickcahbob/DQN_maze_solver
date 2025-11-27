@@ -46,6 +46,8 @@ void add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add );
 
 struct coords select_coords_ll( struct coords_ll* head, int index );
 
+void delete_coords( struct coords_ll* head, int index );
+
 void delete_coords_ll( struct coords_ll** head );
 
 enum board_location get_value( enum board_location* board, int x, int y, int width );
