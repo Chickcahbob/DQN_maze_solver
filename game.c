@@ -28,7 +28,7 @@ int user_play( int width, int height ){
 
     while( completed == -1 ){
 
-        system("clear");
+        //system("clear");
         print_board( board, width, height );
         fprintf( stdout, "Location of I: %d\n", get_agent_position( board, width, height ) );
 

@@ -50,7 +50,7 @@ int generate_tree( enum board_location* board, int height, int width);
 
 int num_values_near( enum board_location* board, int width, int height, int location, enum board_location search_value );
 
-struct coords_ll* initialize_coords();
+struct coords_ll* initialize_coords_ll();
 
 struct directions check_paths( struct coords node, int height, int width, enum board_location* board);
 
