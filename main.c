@@ -17,7 +17,7 @@ int main(){
     const int height = 3;
     const int width = 3;
 
-    bool ai = true;
+    bool ai = false;
 
     /*
     int completed = play( height, width );

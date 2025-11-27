@@ -2,6 +2,9 @@
 
 enum board_location* create_board( int width, int height){
 
+    assert( height % 2 == 1 );
+    assert( width % 2 == 1 );
+
     enum board_location* board = (enum board_location*)malloc( width * height * sizeof(enum board_location));
 
     int cur_location;
@@ -9,15 +12,102 @@ enum board_location* create_board( int width, int height){
         for( int x = 0; x < width; x++ ){
             cur_location = get_position( x, y, width );
             
-            *(board + cur_location) = _EMPTY;
+            *(board + cur_location) = _HOLE;
 
         }
     }
 
-    set_holes( board, width, height );
-    set_objective( board, width, height, _OBJECTIVE );
-    set_objective( board, width, height, _AGENT );
     return board;
+
+}
+
+int generate_tree( enum board_location* board, int height, int width){
+
+    int board_size = height * width;
+    int success = 1;
+
+    int num_x = ( width + 1 ) / 2;
+    int num_y = ( height + 1 ) / 2;
+
+    int num_nodes = num_x * num_y;
+
+    struct coords_ll* head = initialize_coords();
+
+    int start_x = rand() % num_x;
+    int start_y = rand() % num_y;
+
+    return success;
+}
+
+struct coords select_coords_ll( struct coords_ll* head, int index ){
+
+    struct coords_ll* iterator = head;
+
+    for( int i = 0; i < index; i++ ){
+
+        iterator = iterator->next;
+
+    }
+    
+    return iterator->values;
+
+};
+
+void delete_coords( struct coords_ll* head, int index ){
+
+    assert( index != 0 );
+
+    struct coords_ll* iterator = head;
+    struct coords_ll* iterator_next;
+
+    for( int i = 0; i < index - 1; i++ ){
+
+        iterator = iterator->next;
+
+    }
+
+    iterator_next = iterator->next->next;
+
+    iterator->next = iterator_next;
+
+
+}
+
+void delete_coords_ll( struct coords_ll** head ){
+
+    struct coords_ll* iterator = (*head);
+
+    while( iterator->next != NULL ){
+        delete_coords((*head),1);
+    }
+
+
+    free( (*head) );
+
+    (*head) = NULL;
+
+
+}
+
+void add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add ){
+
+    struct coords_ll* iterator = head;
+
+    while( iterator->next != NULL ){
+
+        iterator = iterator->next;
+
+    }
+
+    iterator->next = coords_to_add;
+
+}
+
+struct coords_ll* initialize_coords(){
+
+    struct coords_ll* new_coords_ll = (struct coords_ll*) malloc (sizeof( struct coords_ll ) );
+
+    return new_coords_ll;
 
 }
 
@@ -41,11 +131,11 @@ int save_board( enum board_location** backup_board, enum board_location* board, 
     return success;
 }
 
-void delete_board( enum board_location* board ){
+void delete_board( enum board_location** board ){
 
-    if( board != NULL ){
-        free( board );
-        board = NULL;
+    if( (*board) != NULL ){
+        free( (*board) );
+        (*board) = NULL;
     }
 
 }
@@ -130,9 +220,6 @@ int num_values_near( enum board_location* board, int width, int height, int loca
 
     }
 
-    //fprintf( stdout, "Location x = %d, x_min = %d, x_max = %d\n", location_x, x_min, x_max );
-    //fprintf( stdout, "Location y = %d, y_min = %d, y_max = %d\n", location_y, y_min, y_max );
-
     for( int y = y_min; y <= y_max; y++ ){
 
         for( int x = x_min; x <=x_max; x++ ){
@@ -170,66 +257,6 @@ void set_value( enum board_location* board, int x, int y, int width, enum board_
 
 }
 
-void set_holes(enum board_location *board, int width, int height){
-
-    int max_holes, holes_near, make_hole;
-
-    for( int y = 0; y < height; y++ ){
-        for( int x = 0; x < width; x++ ){
-
-            max_holes = 2;
-
-            if( y == 0 || y == height - 1 ){
-                max_holes--;
-            }
-
-            if( x == 0 || x == width - 1 ){
-                max_holes--;
-            }
-
-            holes_near = num_values_near(board, width, height, get_position( x, y, width), _HOLE);
-
-            if( holes_near < max_holes ){
-
-                make_hole = rand() % max_holes;
-
-                if( make_hole == 0 ){
-
-                    set_value( board, x, y, width, _HOLE );
-
-                }
-
-
-            }
-
-        }
-
-    }
-
-}
-
-void set_objective( enum board_location* board, int x, int y, enum board_location type){
-
-    int location_x = rand() % x;
-    int location_y = rand() % y;
-
-    char cur_value = get_value(board, location_x, location_y, x);
-
-    int objectives_near = num_values_near(board, x, y, location_y * x + location_x, 'O');
-
-    while( cur_value == _OBJECTIVE || cur_value == _AGENT || objectives_near != 0 ){
-
-        location_x = rand() % x;
-        location_y = rand() % y;
-
-        cur_value = get_value(board, location_x, location_y, x);
-        objectives_near = num_values_near(board, x, y, location_y * x + location_x, _OBJECTIVE );
-
-    }
-
-    set_value( board, location_x, location_y, x, type );
-
-}
 
 struct coords get_coordinates(int position, int width){
 

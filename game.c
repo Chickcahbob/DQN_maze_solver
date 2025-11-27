@@ -46,7 +46,7 @@ int user_play( int width, int height ){
 
     system( "clear" );
     print_board( board, width, height );
-    delete_board( board );
+    delete_board( &board );
 
 
     return completed;
@@ -215,12 +215,12 @@ int ai_play( int width, int height ){
         free( next_state_inputs );
 
         if( board != NULL ){
-            delete_board( board );
+            delete_board( &board );
             board = NULL;
         }
 
         if( prev_board != NULL ){
-            delete_board( prev_board );
+            delete_board( &prev_board );
             prev_board = NULL;
         }
 
