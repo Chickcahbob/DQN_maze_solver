@@ -40,12 +40,7 @@ int generate_tree( enum board_location* board, int height, int width){
 
     set_value(board, head->values.x, head->values.y, width, _EMPTY);
 
-    struct coords_ll* next = initialize_coords();
-
-    next->values.x = (rand()  % num_x) * 2;
-    next->values.y = (rand()  % num_y) * 2;
-
-    set_value(board, next->values.x, next->values.y, width, _EMPTY);
+    check_bridge( head->values, board, height, width);
 
     delete_coords_ll(&head);
 
@@ -105,18 +100,117 @@ void delete_coords_ll( struct coords_ll** head ){
 
 }
 
-void add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add ){
+int add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add ){
 
     struct coords_ll* iterator = head;
+
+    int index = 0;
 
     while( iterator->next != NULL ){
 
         iterator = iterator->next;
 
+        index++;
+
     }
 
     iterator->next = coords_to_add;
 
+    return index;
+
+}
+
+struct directions check_paths( struct coords node, int height, int width, enum board_location* board){
+
+    struct directions node_directions;
+
+    node_directions.left = ( node.x != 0 );
+    node_directions.right = ( node.x != width );
+    node_directions.down = ( node.y != height );
+    node_directions.up = ( node.y != 0 );
+
+    if( node_directions.left )
+        node_directions.left = (get_value(board, node.x - 2, node.y, width) == _HOLE);
+    if( node_directions.right )
+        node_directions.left = (get_value(board, node.x + 2, node.y, width) == _HOLE);
+    if( node_directions.up )
+        node_directions.up = (get_value(board, node.x, node.y - 2, width) == _HOLE);
+    if( node_directions.down )
+        node_directions.down = (get_value(board, node.x, node.y + 2, width) == _HOLE);
+
+    return node_directions;
+
+}
+
+bool check_bridge( struct coords node, enum board_location* board, int height, int width ){
+    bool bridge_created = false;
+
+    struct directions node_directions = check_paths( node, height, width, board );
+
+    if( (node_directions.down || node_directions.up || node_directions.left || node_directions.right) == false )
+        return bridge_created;
+
+    int num_possibilities = 0;
+
+    if( node_directions.down )
+        num_possibilities++;
+    if( node_directions.up )
+        num_possibilities++;
+    if( node_directions.left )
+        num_possibilities++;
+    if( node_directions.right )
+        num_possibilities++;
+
+    int selected_direction = rand() % num_possibilities;
+
+    if( node_directions.down ^ bridge_created ){
+        selected_direction--;
+        if( selected_direction == 0 )
+            create_bridge(node, board, height, width, 0);
+    }
+ 
+    if( node_directions.up ^ bridge_created ){
+        selected_direction--;
+        if( selected_direction == 0 )
+            create_bridge(node, board, height, width, 1);
+    }   
+ 
+    if( node_directions.left ^ bridge_created ){
+        selected_direction--;
+        if( selected_direction == 0 )
+            create_bridge(node, board, height, width, 2);
+    }
+
+    if( node_directions.right ^ bridge_created ){
+        selected_direction--;
+        if( selected_direction == 0 )
+            create_bridge(node, board, height, width, 3);
+    }
+
+            bridge_created = true;
+    return bridge_created;
+}
+
+void create_bridge(struct coords node, enum board_location *board, int height, int width, int direction){
+
+    switch( direction ){
+        case 0:
+            set_value(board, node.x, node.y + 1, width, _EMPTY);
+            set_value(board, node.x, node.y + 2, width, _EMPTY);
+            break;
+        case 1:
+            set_value(board, node.x, node.y - 1, width, _EMPTY);
+            set_value(board, node.x, node.y - 2, width, _EMPTY);
+            break;
+        case 2:
+            set_value(board, node.x - 1, node.y, width, _EMPTY);
+            set_value(board, node.x - 2, node.y, width, _EMPTY);
+            break;
+        default:
+            set_value(board, node.x + 1, node.y, width, _EMPTY);
+            set_value(board, node.x + 2, node.y, width, _EMPTY);
+            break;
+    }
 }
 
 struct coords_ll* initialize_coords(){

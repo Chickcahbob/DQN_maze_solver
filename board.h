@@ -5,7 +5,17 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <assert.h>
+
+enum board_location{
+
+    _AGENT,
+    _HOLE,
+    _OBJECTIVE,
+    _EMPTY
+
+};
 
 struct coords{
     int x;
@@ -19,12 +29,12 @@ struct coords_ll{
 
 };
 
-enum board_location{
+struct directions{
 
-    _AGENT,
-    _HOLE,
-    _OBJECTIVE,
-    _EMPTY
+    bool left;
+    bool right;
+    bool up;
+    bool down;
 
 };
 
@@ -42,7 +52,12 @@ int num_values_near( enum board_location* board, int width, int height, int loca
 
 struct coords_ll* initialize_coords();
 
-void add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add );
+struct directions check_paths( struct coords node, int height, int width, enum board_location* board);
+
+void create_bridge( struct coords node, enum board_location* board, int height, int width, int direction );
+bool check_bridge( struct coords node, enum board_location* board, int height, int width );
+
+int add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add );
 
 struct coords select_coords_ll( struct coords_ll* head, int index );
 
