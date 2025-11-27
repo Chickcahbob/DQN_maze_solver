@@ -41,7 +41,35 @@ int generate_tree( enum board_location* board, int height, int width){
 
     set_value(board, head->values.x, head->values.y, width, _EMPTY);
 
-    check_bridge( head->values, board, height, width);
+    int selected_index;
+    struct coords selected_node;
+    struct coords_ll* tmp_head;
+    bool bridge_created;
+    for( int num_visited = 1; num_visited < num_nodes; num_visited++ ){
+
+        selected_index = rand() % num_visited;
+        if( selected_index == 0 )
+            selected_node = head->values;
+        else
+            selected_node = select_coords_ll(head, selected_index);
+
+        bridge_created = check_bridge(selected_node, board, height, width, head);
+        print_board(board, width, height);
+
+        if( bridge_created == false){
+            fprintf( stdout, "Moments before disaster...\n" );
+            if( selected_index == 0 ){
+                tmp_head = head->next;
+                free(head);
+                head = tmp_head;
+            } else {
+                delete_coords(head, selected_index);
+            }
+            num_visited--;
+        }
+
+    }
+
 
     delete_coords_ll(&head);
 
@@ -147,10 +175,9 @@ struct directions check_paths( struct coords node, int height, int width, enum b
 
 }
 
-bool check_bridge( struct coords node, enum board_location* board, int height, int width ){
-    bool bridge_created = false;
+bool check_bridge( struct coords node, enum board_location* board, int height, int width, struct coords_ll* head ){
 
-    fprintf( stdout, "X: %d, Y: %d\n", node.x, node.y );
+    bool bridge_created = false;
 
     struct directions node_directions = check_paths( node, height, width, board );
 
@@ -170,9 +197,11 @@ bool check_bridge( struct coords node, enum board_location* board, int height, i
 
     int selected_direction = rand() % num_possibilities;
 
+    int direction;
+
     if( node_directions.left && bridge_created == false){
         if( selected_direction == 0 ){
-            create_bridge(node, board, height, width, 0);
+            direction = 0;
             bridge_created = true;
         } else {
             selected_direction--;
@@ -181,7 +210,7 @@ bool check_bridge( struct coords node, enum board_location* board, int height, i
 
     if( node_directions.right && bridge_created == false ){
         if( selected_direction == 0 ){
-            create_bridge(node, board, height, width, 1);
+            direction = 1;
             bridge_created = true;
         } else {
             selected_direction--;
@@ -190,7 +219,7 @@ bool check_bridge( struct coords node, enum board_location* board, int height, i
 
     if( node_directions.up && bridge_created == false){
         if( selected_direction == 0 ){
-            create_bridge(node, board, height, width, 2);
+            direction = 2;
             bridge_created = true;
         } else {
             selected_direction--;
@@ -198,36 +227,51 @@ bool check_bridge( struct coords node, enum board_location* board, int height, i
     }
     if( node_directions.down && bridge_created == false){
         if( selected_direction == 0 ){
-            create_bridge(node, board, height, width, 3);
+            direction = 3;
             bridge_created = true;
         } else {
             selected_direction--;
         }
     }
+
+    create_bridge(node, board, height, width, direction, head);
  
     return bridge_created;
 }
 
-void create_bridge(struct coords node, enum board_location *board, int height, int width, int direction){
+void create_bridge(struct coords node, enum board_location *board, int height, int width, int direction, struct coords_ll* head){
+
+    struct coords_ll* new_coords_ll = initialize_coords_ll();
+    new_coords_ll->next = NULL;
 
     switch( direction ){
         case 0:
+            new_coords_ll->values.x = node.x - 2;
+            new_coords_ll->values.y = node.y;
             set_value(board, node.x - 1, node.y, width, _EMPTY);
             set_value(board, node.x - 2, node.y, width, _EMPTY);
             break;
         case 1:
+            new_coords_ll->values.x = node.x + 2;
+            new_coords_ll->values.y = node.y;
             set_value(board, node.x + 1, node.y, width, _EMPTY);
             set_value(board, node.x + 2, node.y, width, _EMPTY);
             break;
         case 2:
+            new_coords_ll->values.x = node.x;
+            new_coords_ll->values.y = node.y - 2;
             set_value(board, node.x, node.y - 1, width, _EMPTY);
             set_value(board, node.x, node.y - 2, width, _EMPTY);
             break;
         default:
+            new_coords_ll->values.x = node.x;
+            new_coords_ll->values.y = node.y + 2;
             set_value(board, node.x, node.y + 1, width, _EMPTY);
             set_value(board, node.x, node.y + 2, width, _EMPTY);
             break;
     }
+
+    add_coords_ll(head, new_coords_ll);
 }
 
 struct coords_ll* initialize_coords_ll(){

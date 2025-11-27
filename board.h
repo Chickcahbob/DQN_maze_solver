@@ -54,8 +54,9 @@ struct coords_ll* initialize_coords_ll();
 
 struct directions check_paths( struct coords node, int height, int width, enum board_location* board);
 
-void create_bridge( struct coords node, enum board_location* board, int height, int width, int direction );
-bool check_bridge( struct coords node, enum board_location* board, int height, int width );
+void create_bridge( struct coords node, enum board_location* board, int height, int width, int direction, struct coords_ll* head );
+
+bool check_bridge( struct coords node, enum board_location* board, int height, int width, struct coords_ll* head );
 
 int add_coords_ll( struct coords_ll* head, struct coords_ll* coords_to_add );
 
