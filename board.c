@@ -35,15 +35,15 @@ int generate_tree( enum board_location* board, int height, int width){
 
     struct coords_ll* head = initialize_coords();
 
-    head->values.x = rand()  % num_x;
-    head->values.y = rand()  % num_y;
+    head->values.x = (rand()  % num_x) * 2;
+    head->values.y = (rand()  % num_y) * 2;
 
     set_value(board, head->values.x, head->values.y, width, _EMPTY);
 
     struct coords_ll* next = initialize_coords();
 
-    next->values.x = rand()  % num_x;
-    next->values.y = rand()  % num_y;
+    next->values.x = (rand()  % num_x) * 2;
+    next->values.y = (rand()  % num_y) * 2;
 
     set_value(board, next->values.x, next->values.y, width, _EMPTY);
 
