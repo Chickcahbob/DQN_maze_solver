@@ -18,8 +18,9 @@ enum board_location* create_board( int width, int height){
     }
 
     int tree_test = generate_tree( board, height, width);
-
     assert( tree_test == 0 );
+    create_obj_and_agent( board, width, height );
+
     return board;
 
 }
@@ -46,41 +47,52 @@ int generate_tree( enum board_location* board, int height, int width){
     struct coords_ll* tmp_head;
     bool bridge_created;
     int nodes_in_list = 1;
-    while( nodes_in_list != 0 ){
+
+    for( int i = 1; i < num_nodes; i++ ){
 
         selected_index = rand() % nodes_in_list;
 
-        if( selected_index == 0 )
-            selected_node = head->values;
-        else
-            selected_node = select_coords_ll(head, selected_index);
+        selected_node = select_coords_ll(head, selected_index);
 
         bridge_created = check_bridge(selected_node, board, height, width, head);
-        //print_board(board, width, height);
 
-        if( bridge_created == false){
-            if( selected_index == 0 ){
-                tmp_head = head->next;
-                free(head);
-                head = tmp_head;
-            } else {
-                delete_coords(head, selected_index);
-                nodes_in_list--;
-            }
-        } else {
-            nodes_in_list++;
+        if( bridge_created == false ){
+            head = delete_coords( &head, selected_index );
+            i--;
         }
 
     }
 
-    fprintf( stdout, "NODES VISITED: %d NODES TOTAL: %d\n", nodes_in_list, num_nodes );
-
     delete_coords_ll(&head);
 
-    success = 0;
     assert( head == NULL );
+    success = 0;
 
     return success;
+}
+
+void create_obj_and_agent( enum board_location* board, int width, int height ){
+
+    int num_x = (width + 1 ) / 2;
+    int num_y = (height + 1 ) / 2;
+
+    int obj_x = 0;
+    int obj_y = 0;
+    int agent_x = 0;
+    int agent_y = 0;
+
+    while( obj_x == agent_x && obj_y == agent_y ){
+
+        obj_x = (rand() % num_x) * 2;
+        obj_y = (rand() % num_y) * 2;
+        agent_x = (rand() % num_x) * 2;
+        agent_y = (rand() % num_y) * 2;
+
+    }
+
+    set_value( board, agent_x, agent_y, width, _AGENT );
+    set_value( board, obj_x, obj_y, width, _OBJECTIVE );
+    
 }
 
 struct coords select_coords_ll( struct coords_ll* head, int index ){
@@ -97,13 +109,17 @@ struct coords select_coords_ll( struct coords_ll* head, int index ){
 
 };
 
-void delete_coords( struct coords_ll* head, int index ){
+struct coords_ll* delete_coords( struct coords_ll** head, int index ){
 
-    assert( index != 0 );
-
-    struct coords_ll* iterator = head;
+    struct coords_ll* iterator = (*head);
     struct coords_ll* iterator_next;
 
+    if( index == 0 ){
+        iterator_next = iterator->next;
+        free( *head );
+        return iterator_next;
+
+    }
     for( int i = 0; i < index - 1; i++ ){
 
         iterator = iterator->next;
@@ -117,6 +133,7 @@ void delete_coords( struct coords_ll* head, int index ){
 
     iterator->next = iterator_next;
 
+    return (*head);
 
 }
 
@@ -125,7 +142,7 @@ void delete_coords_ll( struct coords_ll** head ){
     struct coords_ll* iterator = (*head);
 
     while( iterator->next != NULL ){
-        delete_coords((*head),1);
+        delete_coords(head,1);
     }
 
 

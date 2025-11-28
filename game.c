@@ -28,9 +28,8 @@ int user_play( int width, int height ){
 
     while( completed == -1 ){
 
-        //system("clear");
+        system("clear");
         print_board( board, width, height );
-        fprintf( stdout, "Location of I: %d\n", get_agent_position( board, width, height ) );
 
         char direction = get_direction();
 
@@ -38,14 +37,18 @@ int user_play( int width, int height ){
 
         if( stored_value == _HOLE ){
             completed = 0;
+            system("clear");
+            print_board( board, width, height );
+            fprintf( stdout, "You lost.\n" );
         } else if ( stored_value == _OBJECTIVE ){
             completed = 1;
+            system("clear");
+            print_board( board, width, height );
+            fprintf( stdout, "YOU WIN!!!\n" );
         }
 
     }
 
-    system( "clear" );
-    print_board( board, width, height );
     delete_board( &board );
 
 
