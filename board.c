@@ -45,31 +45,35 @@ int generate_tree( enum board_location* board, int height, int width){
     struct coords selected_node;
     struct coords_ll* tmp_head;
     bool bridge_created;
-    for( int num_visited = 1; num_visited < num_nodes; num_visited++ ){
+    int nodes_in_list = 1;
+    while( nodes_in_list != 0 ){
 
-        selected_index = rand() % num_visited;
+        selected_index = rand() % nodes_in_list;
+
         if( selected_index == 0 )
             selected_node = head->values;
         else
             selected_node = select_coords_ll(head, selected_index);
 
         bridge_created = check_bridge(selected_node, board, height, width, head);
-        print_board(board, width, height);
+        //print_board(board, width, height);
 
         if( bridge_created == false){
-            fprintf( stdout, "Moments before disaster...\n" );
             if( selected_index == 0 ){
                 tmp_head = head->next;
                 free(head);
                 head = tmp_head;
             } else {
                 delete_coords(head, selected_index);
+                nodes_in_list--;
             }
-            num_visited--;
+        } else {
+            nodes_in_list++;
         }
 
     }
 
+    fprintf( stdout, "NODES VISITED: %d NODES TOTAL: %d\n", nodes_in_list, num_nodes );
 
     delete_coords_ll(&head);
 
@@ -106,7 +110,10 @@ void delete_coords( struct coords_ll* head, int index ){
 
     }
 
-    iterator_next = iterator->next->next;
+    if( iterator->next == NULL )
+        iterator_next = NULL;
+    else
+        iterator_next = iterator->next->next;
 
     iterator->next = iterator_next;
 
@@ -272,6 +279,7 @@ void create_bridge(struct coords node, enum board_location *board, int height, i
     }
 
     add_coords_ll(head, new_coords_ll);
+
 }
 
 struct coords_ll* initialize_coords_ll(){
