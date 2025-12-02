@@ -1,5 +1,4 @@
 #include "neural_network.h"
-#include <sched.h>
 
 void network_init( struct network_t* network ){
 
@@ -55,7 +54,7 @@ void initialize_random_values(const struct network_values_t* network_values, con
 
 void *thread_forward_prop( void *args ){
 
-    struct multithreading_nodes_t *thread_data = (struct multithreading_nodes_t *)args;
+    struct forward_prop_thread_t* thread_data = (struct forward_prop_thread_t *)args;
     struct network_values_t *values_alias = thread_data->network->network_values;
     struct network_args_t *args_alias = thread_data->network->network_args;
 
@@ -78,9 +77,7 @@ void *thread_forward_prop( void *args ){
 
         for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + prev_layer_nodes; prev_layer_node++ ){
 
-            for( int weight = weight_min; weight < weight_max; weight++ ){
-                values_alias->nodes[calc_node] += values_alias->nodes[prev_layer_node] * values_alias->weights[weight];
-            }
+            values_alias->nodes[calc_node] += values_alias->nodes[prev_layer_node] * values_alias->weights[weight_min + prev_layer_node];
 
         }
 
@@ -89,7 +86,7 @@ void *thread_forward_prop( void *args ){
 
         switch( args_alias->functions[calc_node] ){
             case _SIGMOID:
-                values_alias->nodes[calc_node] = 1 / ( 1 + expf(-4 * values_alias->nodes[calc_node]));
+                values_alias->nodes[calc_node] = 1 / ( 1 + expf(-1 * values_alias->nodes[calc_node]));
                 break;
             case _RELU:
                 if( values_alias->nodes[calc_node] < 0 )
@@ -105,6 +102,91 @@ void *thread_forward_prop( void *args ){
 
 }
 
+void *thread_back_prop( void *args ){
+
+    struct back_prop_thread_t* thread_data = (struct back_prop_thread_t*)args;
+    struct network_t* network = thread_data->network;
+    struct network_values_t *values_alias = network->network_values;
+    struct network_args_t *args_alias = network->network_args;
+
+    int prev_layer_base = 0;
+    int prev_layer_nodes =  args_alias->nodes_per_layer[thread_data->current_layer - 1];
+    int weight_min = 1;
+    int weight_max;
+
+    for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
+
+        prev_layer_base += args_alias->nodes_per_layer[layer]; 
+        weight_min *= args_alias->nodes_per_layer[layer]; 
+    }
+
+    weight_min -= 1;
+
+    float delta_C;
+    float weight_delta;
+
+    float sigmoid;
+
+    for( int calc_node = thread_data->min_max[0]; calc_node < thread_data->min_max[1]; calc_node++ ){
+
+        values_alias->nodes[calc_node] = values_alias->biases[calc_node];
+        weight_max = weight_min + prev_layer_nodes;
+
+        switch( thread_data->cost ){
+
+            default:
+                // MEAN SQUARED ERROR ( aL - y ) ^ 2
+                delta_C = (values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] );
+                delta_C = delta_C * delta_C;
+                break;
+
+        }
+
+        for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + prev_layer_nodes; prev_layer_node++ ){
+
+            weight_delta = delta_C * thread_data->learning_rate;
+
+            // dC/daL: Derivative of cost functions
+            switch( thread_data->cost ){
+                default:
+                    // Derivative of MSE 2 * ( aL - y )
+                    weight_delta /= (2 * ( values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] ));
+                    break;
+            }
+
+            // daL/dZL
+            switch( args_alias->functions[calc_node] ){
+
+                // sigmoid function: o(x)
+                // Derivative of sigmoid function: o(x) * (1 - o(x) )
+                case _SIGMOID:
+                sigmoid = 1 / ( 1 + expf(-1 * values_alias->nodes[calc_node]));
+                weight_delta /= ( sigmoid * ( 1 - sigmoid ));
+                    break;
+                default:
+                    // If _LINEAR or _RELU, daL/dZL = 1 so nothing changes
+                    break;
+
+            }
+
+            // dZL/dw: Derivative of 
+            weight_delta /= values_alias->nodes[prev_layer_node];
+
+            // Divide weight changes evenly among all layers and nodes
+            weight_delta /= thread_data->current_layer;
+            weight_delta /= args_alias->nodes_per_layer[thread_data->current_layer - 1];
+
+            // Update weights
+            values_alias->weights[weight_min + prev_layer_node] += weight_delta;
+
+        }
+
+        weight_min = weight_max;
+
+    }
+
+}
+
 void forward_prop( struct network_t* network){
 
     int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
@@ -116,7 +198,7 @@ void forward_prop( struct network_t* network){
 
     int max_threads;
 
-    struct multithreading_nodes_t * multithreading_nodes = calloc(num_cores, sizeof(struct multithreading_nodes_t));
+    struct forward_prop_thread_t * forward_prop_thread = calloc(num_cores, sizeof(struct forward_prop_thread_t));
     pthread_t threads[num_cores];
 
     int layer_base = network->network_args->nodes_per_layer[0];
@@ -135,13 +217,13 @@ void forward_prop( struct network_t* network){
 
         for( int thread_num = 0; thread_num < max_threads; thread_num++){
 
-            multithreading_nodes[thread_num].network = network;
-            multithreading_nodes[thread_num].min_max[0] = layer_base;
-            multithreading_nodes[thread_num].min_max[1] = layer_base + calcs_per_core[thread_num];
-            multithreading_nodes[thread_num].current_layer = cur_layer;
+            forward_prop_thread[thread_num].network = network;
+            forward_prop_thread[thread_num].min_max[0] = layer_base;
+            forward_prop_thread[thread_num].min_max[1] = layer_base + calcs_per_core[thread_num];
+            forward_prop_thread[thread_num].current_layer = cur_layer;
 
 
-           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &multithreading_nodes[thread_num]);
+           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &forward_prop_thread[thread_num]);
 
            layer_base += calcs_per_core[thread_num];
         }
@@ -154,7 +236,7 @@ void forward_prop( struct network_t* network){
 
     }
 
-    free( multithreading_nodes );
+    free( forward_prop_thread );
 
             
 }

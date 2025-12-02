@@ -26,7 +26,8 @@ int main(){
         fprintf( stdout, "ERROR: Width needs to be an odd number\n" );
         return 1;
     }
-    bool ai = false;
+
+    bool ai = true;
 
     /*
     int completed = play( height, width );

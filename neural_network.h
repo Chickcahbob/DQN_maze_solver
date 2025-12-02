@@ -8,11 +8,18 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <assert.h>
+#include <sched.h>
 
 enum activation_function{
     _LINEAR,
     _SIGMOID,
     _RELU
+};
+
+enum cost_function{
+
+    _MEAN_SQUARED_ERROR
+
 };
 
 struct layer_index_range{
@@ -43,11 +50,22 @@ struct network_t{
     struct num_values_t *num_values;
 };
 
-struct multithreading_nodes_t{
+struct forward_prop_thread_t{
 
     struct network_t *network;
     int min_max[2];
     int current_layer;
+
+};
+
+struct back_prop_thread_t{
+
+    enum cost_function cost;
+    struct network_t *network;
+    int min_max[2];
+    int current_layer;
+    float learning_rate;
+    float* node_targets;
 
 };
 
@@ -71,8 +89,11 @@ void initialize_random_values( const struct network_values_t* network_values, co
 //Calculate forward propogation of node values
 void forward_prop( struct network_t *network );
 
-//Subroutine for forward propogation
+//Subroutine for forward propagation
 void *thread_foward_prop( void *args );
+
+// Subroutine for backwords propagation
+void *thread_back_prop( void *args );
 
 //Returns the action with the greatest float value
 int select_action( struct network_t* network);
