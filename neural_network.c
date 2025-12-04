@@ -114,6 +114,15 @@ void *thread_back_prop( void *args ){
     int weight_min = 1;
     int weight_max;
 
+    struct back_prop_return_t* return_values = (struct back_prop_return_t*) malloc (sizeof( struct back_prop_return_t ) );
+    return_values->num_nodes = thread_data->min_max[1] - thread_data->min_max[0];
+
+    // Return delta for biases calculated for the range of nodes looped over
+    // Return deltas for all previous layer nodes
+    return_values->bias_deltas = (float*) malloc( sizeof(float) * return_values->num_nodes );
+    return_values->prev_node_deltas = (float*) malloc( sizeof(float) * prev_layer_nodes);
+
+
     for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
 
         prev_layer_base += args_alias->nodes_per_layer[layer]; 
@@ -123,8 +132,10 @@ void *thread_back_prop( void *args ){
     weight_min -= 1;
 
     float delta_C;
+    float delta;
     float weight_delta;
-
+    float prev_node_delta;
+    float bias_delta;
     float sigmoid;
 
     for( int calc_node = thread_data->min_max[0]; calc_node < thread_data->min_max[1]; calc_node++ ){
@@ -142,15 +153,17 @@ void *thread_back_prop( void *args ){
 
         }
 
+        prev_node_delta = 0;
+        bias_delta = 0;
         for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + prev_layer_nodes; prev_layer_node++ ){
 
-            weight_delta = delta_C * thread_data->learning_rate;
+            delta = delta_C * thread_data->learning_rate;
 
             // dC/daL: Derivative of cost functions
             switch( thread_data->cost ){
                 default:
                     // Derivative of MSE 2 * ( aL - y )
-                    weight_delta /= (2 * ( values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] ));
+                    delta /= (2 * ( values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] ));
                     break;
             }
 
@@ -161,7 +174,7 @@ void *thread_back_prop( void *args ){
                 // Derivative of sigmoid function: o(x) * (1 - o(x) )
                 case _SIGMOID:
                 sigmoid = 1 / ( 1 + expf(-1 * values_alias->nodes[calc_node]));
-                weight_delta /= ( sigmoid * ( 1 - sigmoid ));
+                delta /= ( sigmoid * ( 1 - sigmoid ));
                     break;
                 default:
                     // If _LINEAR or _RELU, daL/dZL = 1 so nothing changes
@@ -169,12 +182,20 @@ void *thread_back_prop( void *args ){
 
             }
 
-            // dZL/dw: Derivative of 
-            weight_delta /= values_alias->nodes[prev_layer_node];
-
             // Divide weight changes evenly among all layers and nodes
-            weight_delta /= thread_data->current_layer;
-            weight_delta /= args_alias->nodes_per_layer[thread_data->current_layer - 1];
+            delta /= thread_data->current_layer;
+            delta /= args_alias->nodes_per_layer[thread_data->current_layer - 1];
+
+
+            // Bias Delta Here dZL/dB = 1
+            // Summed together since one bias is shared between all weights
+            bias_delta += delta / prev_layer_nodes;
+
+            // Previous node delta dZL/a(L-1)
+            prev_node_delta += delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes) ;
+
+            // dZL/dw: Derivative of weight with respect to ZL
+            weight_delta = delta / values_alias->nodes[prev_layer_node];
 
             // Update weights
             values_alias->weights[weight_min + prev_layer_node] += weight_delta;
@@ -183,8 +204,9 @@ void *thread_back_prop( void *args ){
 
         weight_min = weight_max;
 
-    }
+    }   
 
+    return (void *)return_values;;
 }
 
 void forward_prop( struct network_t* network){
