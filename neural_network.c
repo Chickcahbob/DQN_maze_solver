@@ -1,4 +1,6 @@
 #include "neural_network.h"
+#include <cstdlib>
+#include <stdlib.h>
 
 void network_init( struct network_t* network ){
 
@@ -113,14 +115,14 @@ void *thread_back_prop( void *args ){
     int prev_layer_nodes =  args_alias->nodes_per_layer[thread_data->current_layer - 1];
     int weight_min = 1;
     int weight_max;
+    int num_nodes = thread_data->min_max[1] - thread_data->min_max[0];
 
     struct back_prop_return_t* return_values = (struct back_prop_return_t*) malloc (sizeof( struct back_prop_return_t ) );
-    return_values->num_nodes = thread_data->min_max[1] - thread_data->min_max[0];
 
     // Return delta for biases calculated for the range of nodes looped over
     // Return deltas for all previous layer nodes
-    return_values->bias_deltas = (float*) malloc( sizeof(float) * return_values->num_nodes );
-    return_values->prev_node_deltas = (float*) malloc( sizeof(float) * prev_layer_nodes);
+    return_values->bias_deltas = (float*) calloc(num_nodes, sizeof(float));
+    return_values->prev_node_deltas = (float*) calloc(prev_layer_nodes, sizeof(float));
 
 
     for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
@@ -182,17 +184,18 @@ void *thread_back_prop( void *args ){
 
             }
 
-            // Divide weight changes evenly among all layers and nodes
+            // Divide weight changes evenly among all layers
             delta /= thread_data->current_layer;
-            delta /= args_alias->nodes_per_layer[thread_data->current_layer - 1];
+
+            // Divide changes evenly among each node in the previous laye
+            delta /= prev_layer_nodes;
 
 
             // Bias Delta Here dZL/dB = 1
-            // Summed together since one bias is shared between all weights
-            bias_delta += delta / prev_layer_nodes;
+            return_values->bias_deltas[calc_node - thread_data->min_max[0]] += delta;
 
             // Previous node delta dZL/a(L-1)
-            prev_node_delta += delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes) ;
+            return_values->prev_node_deltas[prev_layer_node - prev_layer_base] += delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes) ;
 
             // dZL/dw: Derivative of weight with respect to ZL
             weight_delta = delta / values_alias->nodes[prev_layer_node];
@@ -206,7 +209,9 @@ void *thread_back_prop( void *args ){
 
     }   
 
-    return (void *)return_values;;
+    return_values->thread_num = thread_data->thread_num;
+
+    return (void *)return_values;
 }
 
 void forward_prop( struct network_t* network){

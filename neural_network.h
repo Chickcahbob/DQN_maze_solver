@@ -60,13 +60,20 @@ struct forward_prop_thread_t{
 
 struct back_prop_thread_t{
 
-    enum cost_function cost;
-    struct network_t *network;
+    int thread_num;
+    float* node_targets;
     int min_max[2];
     int current_layer;
     float learning_rate;
-    float* node_targets;
+    enum cost_function cost;
+    struct network_t *network;
 
+};
+
+struct back_prop_return_t{
+    int thread_num;
+    float* prev_node_deltas;
+    float* bias_deltas;
 };
 
 struct targets_t{
