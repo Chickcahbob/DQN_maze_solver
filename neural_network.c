@@ -1,6 +1,4 @@
 #include "neural_network.h"
-#include <cstdlib>
-#include <stdlib.h>
 
 void network_init( struct network_t* network ){
 
@@ -116,6 +114,7 @@ void *thread_back_prop( void *args ){
     int weight_min = 1;
     int weight_max;
     int num_nodes = thread_data->min_max[1] - thread_data->min_max[0];
+    int num_weights = num_nodes * prev_layer_nodes;
 
     struct back_prop_return_t* return_values = (struct back_prop_return_t*) malloc (sizeof( struct back_prop_return_t ) );
 
@@ -123,6 +122,7 @@ void *thread_back_prop( void *args ){
     // Return deltas for all previous layer nodes
     return_values->bias_deltas = (float*) calloc(num_nodes, sizeof(float));
     return_values->prev_node_deltas = (float*) calloc(prev_layer_nodes, sizeof(float));
+    return_values->weights_deltas = (float*) calloc(num_weights, sizeof(float));
 
 
     for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
@@ -133,12 +133,20 @@ void *thread_back_prop( void *args ){
 
     weight_min -= 1;
 
+    int weight_delta_offset = weight_min;
+
     float delta_C;
     float delta;
     float weight_delta;
     float prev_node_delta;
     float bias_delta;
     float sigmoid;
+
+    // Calculate how much weights should be changed compared to biases
+    float cur_weight_significance = ( 1 - thread_data->bias_significance ) / thread_data->current_layer;
+
+    // Calculate how much previous node targets should change in respect to biases and weights
+    float prev_node_significance = 1 - thread_data->bias_significance - cur_weight_significance;
 
     for( int calc_node = thread_data->min_max[0]; calc_node < thread_data->min_max[1]; calc_node++ ){
 
@@ -192,16 +200,17 @@ void *thread_back_prop( void *args ){
 
 
             // Bias Delta Here dZL/dB = 1
-            return_values->bias_deltas[calc_node - thread_data->min_max[0]] += delta;
+            // Multiplied by bias significance (how much biases should change compared to weights)
+            return_values->bias_deltas[calc_node - thread_data->min_max[0]] += delta * thread_data->bias_significance;
 
             // Previous node delta dZL/a(L-1)
-            return_values->prev_node_deltas[prev_layer_node - prev_layer_base] += delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes) ;
+            return_values->prev_node_deltas[prev_layer_node - prev_layer_base] += (delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes)) * prev_node_significance;
 
             // dZL/dw: Derivative of weight with respect to ZL
-            weight_delta = delta / values_alias->nodes[prev_layer_node];
+            return_values->weights_deltas[prev_layer_node - prev_layer_base] += (delta / values_alias->nodes[prev_layer_node] ) * cur_weight_significance;
 
             // Update weights
-            values_alias->weights[weight_min + prev_layer_node] += weight_delta;
+            values_alias->weights[weight_delta_offset - weight_min + prev_layer_node] += weight_delta;
 
         }
 
@@ -230,6 +239,7 @@ void forward_prop( struct network_t* network){
 
     int layer_base = network->network_args->nodes_per_layer[0];
 
+    int thread_start;
     for( int cur_layer = 1; cur_layer < num_layers_alias; cur_layer++ ){
 
         calcs_per_core = calloc( num_cores, sizeof(int) );
@@ -242,11 +252,13 @@ void forward_prop( struct network_t* network){
         else
             max_threads = nodes_per_layer_alias[cur_layer];
 
+        thread_start = layer_base;
         for( int thread_num = 0; thread_num < max_threads; thread_num++){
 
             forward_prop_thread[thread_num].network = network;
-            forward_prop_thread[thread_num].min_max[0] = layer_base;
-            forward_prop_thread[thread_num].min_max[1] = layer_base + calcs_per_core[thread_num];
+            forward_prop_thread[thread_num].min_max[0] = thread_start;
+            forward_prop_thread[thread_num].min_max[1] = thread_start + calcs_per_core[thread_num];
+            thread_start += calcs_per_core[thread_num];
             forward_prop_thread[thread_num].current_layer = cur_layer;
 
 
@@ -260,13 +272,136 @@ void forward_prop( struct network_t* network){
         }
 
         free( calcs_per_core );
+        calcs_per_core = NULL;
 
     }
 
     free( forward_prop_thread );
-
+    forward_prop_thread = NULL;
             
 }
+
+void back_prop(struct network_t *network, float learning_rate, float bias_significance, float* targets ){
+
+    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
+
+    int num_layers_alias = network->network_args->num_layers;
+    int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
+
+    int *calcs_per_core;
+    int max_threads;
+
+    struct back_prop_thread_t* back_prop_thread = calloc( num_cores, sizeof( struct back_prop_thread_t));
+    void* void_returns[num_cores];
+    struct back_prop_return_t* back_prop_return[num_cores];
+    pthread_t threads[num_cores];
+
+
+    for( int i = 0; i < num_cores; i++ ){
+        back_prop_return[i] = NULL;
+    }
+
+    int layer_base = network->network_args->nodes_per_layer[0];
+
+    int calling_thread;
+
+    int thread_start;
+    int prev_layer_base;
+    int thread_weight_min, weight_min, weight_max, weights_in_thread;
+
+    float* hidden_layer_targets;
+    for( int cur_layer = 1; cur_layer < num_layers_alias; cur_layer++ ){
+
+        calcs_per_core = calloc( num_cores, sizeof(int) );
+        
+        for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[cur_layer]; node_to_calc++ )
+            calcs_per_core[node_to_calc % num_cores]++;
+
+        if( num_cores < nodes_per_layer_alias[cur_layer] )
+            max_threads = num_cores;
+        else
+            max_threads = nodes_per_layer_alias[cur_layer];
+
+        thread_start = layer_base;
+        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
+            back_prop_thread[thread_num].network = network;
+            back_prop_thread[thread_num].min_max[0] = thread_start;
+            back_prop_thread[thread_num].min_max[1] = thread_start + calcs_per_core[thread_num];
+            thread_start += calcs_per_core[thread_num];
+            back_prop_thread[thread_num].current_layer = cur_layer;
+            back_prop_thread[thread_num].cost = _MEAN_SQUARED_ERROR;
+            back_prop_thread[thread_num].network = network;
+            back_prop_thread[thread_num].learning_rate = learning_rate;
+            back_prop_thread[thread_num].bias_significance = bias_significance;
+
+            //TODO: Create target values for calculations in threads
+            //NOTE: This needs to be a subset of the target values of all nodes in the current layer since each thread calculates a portion of the layer
+            
+           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &back_prop_thread[thread_num]);
+        }
+
+        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
+
+            pthread_join(thread_num, &void_returns[thread_num]);
+
+        }
+
+        prev_layer_base = 0;
+        weight_min = 1;
+        for( int layer = 0; layer < cur_layer; layer++ ){
+            prev_layer_base += network->network_args->nodes_per_layer[layer];
+            thread_weight_min *= network->network_args->nodes_per_layer[layer];
+        }
+
+        weight_min -= 1;
+
+        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
+
+            // Note: Void returns array may not be in order that back_prop_returns needs to be
+            back_prop_return[thread_num] = (struct back_prop_return_t*) void_returns[thread_num];
+
+            calling_thread = back_prop_return[thread_num]->thread_num;
+
+            // Update biases for current layer
+            for( int node = back_prop_thread[calling_thread].min_max[0]; node < back_prop_thread[calling_thread].min_max[1]; node++ ){
+                network->network_values->biases[node] += back_prop_return[thread_num]->bias_deltas[node - back_prop_thread[calling_thread].min_max[0] ];
+                weight_min = thread_weight_min + back_prop_return[thread_num]->bias_deltas[node - back_prop_thread[calling_thread].min_max[0]];
+                weights_in_thread = (back_prop_thread[calling_thread].min_max[1] - back_prop_thread[calling_thread].min_max[0]) * network->network_args->nodes_per_layer[cur_layer - 1];
+
+                for( int weight = weight_min; weight < weight_min + weights_in_thread; weight++ ){
+
+                    network->network_values->weights[weight] += back_prop_return[thread_num]->weights_deltas[ weight - weight_min];
+
+                }
+
+            }
+
+            // Update target node value for previous layer, enables recursion
+            if( prev_layer_base != 0 ){
+
+                for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + network->network_args->nodes_per_layer[cur_layer - 1]; prev_layer_node++ ){
+
+                    network->network_values->nodes[prev_layer_node] += back_prop_return[thread_num]->prev_node_deltas[prev_layer_node - prev_layer_base]; 
+
+                }
+
+            }
+
+            free( back_prop_return[thread_num] );
+            back_prop_return[thread_num] = NULL;
+
+        }
+
+        free( calcs_per_core );
+        calcs_per_core = NULL;
+
+    }
+
+    free( back_prop_thread );
+    back_prop_thread = NULL;
+
+}
+
 
 //Print current data stored in the network to specified output stream type
 void fprint_network( FILE *__restrict stream, const struct network_values_t* network_values, const struct num_values_t *num_values){

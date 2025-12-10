@@ -65,6 +65,7 @@ struct back_prop_thread_t{
     int min_max[2];
     int current_layer;
     float learning_rate;
+    float bias_significance;
     enum cost_function cost;
     struct network_t *network;
 
@@ -74,6 +75,7 @@ struct back_prop_return_t{
     int thread_num;
     float* prev_node_deltas;
     float* bias_deltas;
+    float* weights_deltas;
 };
 
 struct targets_t{
@@ -94,10 +96,13 @@ void get_num_values( struct network_t* network );
 void initialize_random_values( const struct network_values_t* network_values, const struct num_values_t *num_values, float max);
 
 //Calculate forward propogation of node values
-void forward_prop( struct network_t *network );
+void forward_prop( struct network_t* network );
 
 //Subroutine for forward propagation
 void *thread_foward_prop( void *args );
+
+//Calculate new weights and biases for network
+void back_prop(struct network_t *network, float learning_rate, float bias_significance, float* targets );
 
 // Subroutine for backwords propagation
 void *thread_back_prop( void *args );
