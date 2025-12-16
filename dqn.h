@@ -35,6 +35,6 @@ void policy_to_target( const struct network_t *policy_network, struct network_t*
 //float dqn_loss( struct network_t *policy_network, struct network_t* target_network );
 float discrete_dqn_loss( float policy_network_prediction, float target_reward );
 
-float bellman_equation( float immediate_reward, float discount_factor, float next_reward );
+float* bellman_equation( float immediate_reward, float discount_factor, float* next_rewards, int num_targets );
 
 #endif

@@ -189,16 +189,19 @@ float discrete_dqn_loss( float policy_network_prediction, float target_reward ){
 
 }
 
-float bellman_equation( float immediate_reward, float discount_factor, float next_reward ){
+float* bellman_equation( float immediate_reward, float discount_factor, float* next_rewards, int num_targets ){
 
-    float target_reward = immediate_reward + (discount_factor * next_reward );
+    float* targets = calloc( num_targets, sizeof( float ) );
+    for( int i = 0; i < num_targets; i++ ){
+        targets[i] = immediate_reward + (discount_factor * next_rewards[i]);
 
-    if( target_reward > 1 )
-        target_reward = 1;
+        if( targets[i] > 1 )
+            targets[i] = 1;
 
-    if( target_reward < -1 )
-        target_reward = -1;
+        if( targets[i] < -1 )
+            targets[i] = -1;
+    }
 
-    return target_reward;
+    return targets;
 
 }

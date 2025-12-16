@@ -119,7 +119,7 @@ int ai_play( int width, int height ){
     struct replay_data_t* next_replay;
     struct replay_data_t* sample;
 
-    float reward, target_value, dqn_loss;
+    float reward, dqn_loss;
     int replay_index = 0;
     int sample_index = 0;
 
@@ -129,6 +129,18 @@ int ai_play( int width, int height ){
     int target_update_rounds = 2;
 
     int nn_action, tn_action;
+
+    float* target_values = calloc( nodes_per_layer_alias[num_layers_alias - 1], sizeof( float ));
+    float* rewards = calloc( nodes_per_layer_alias[num_layers_alias - 1], sizeof( float ));
+
+
+    int last_layer_start = 0;
+
+    for( int i = 0; i < num_layers_alias - 1; i++ ){
+
+        last_layer_start += nodes_per_layer_alias[i];
+
+    }
 
     int i = 0;
     while( i < 100 ){
@@ -195,7 +207,9 @@ int ai_play( int width, int height ){
         next_location = selection_translate( board, stored_value, height, width, tn_action );
         reward = convert_reward(next_location);
 
-        target_value = bellman_equation(sample->reward, discount_factor, reward);
+        target_values = bellman_equation(sample->reward, discount_factor, rewards, 4);
+
+        back_prop(network, 0.1, 0.4, target_values);
 
         reconstruct_board(board, sample->state_values, board_size);
         stored_value = _EMPTY;
@@ -208,11 +222,20 @@ int ai_play( int width, int height ){
         next_location = selection_translate( board, stored_value, height, width, tn_action );
         reward = convert_reward(next_location);
 
-        dqn_loss = discrete_dqn_loss(reward, target_value);
+        for( int i = 0; i < nodes_per_layer_alias[ num_layers_alias - 1]; i++ ){
+
+            rewards[i] = network->network_values->nodes[last_layer_start + i ];
+
+            if( i == tn_action )
+                rewards[i] += reward;
+
+        }
+
+        //dqn_loss = discrete_dqn_loss(reward, target_value);
 
         print_board(board, width, height);
 
-        fprintf( stdout, "Network Reward: %f Bellman Equation: %f Loss Function (MSE): %f\n", reward, target_value, dqn_loss );
+        //fprintf( stdout, "Network Reward: %f Bellman Equation: %f Loss Function (MSE): %f\n", reward, target_value, dqn_loss );
 
         free( state_inputs );
         free( next_state_inputs );
@@ -240,6 +263,9 @@ int ai_play( int width, int height ){
     
     if( target_network != NULL )
         delete_network( target_network );
+
+    free( target_values );
+    target_values = NULL;
 
     return completed;
 }

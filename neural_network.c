@@ -293,12 +293,29 @@ void back_prop(struct network_t *network, float learning_rate, float bias_signif
 
     struct back_prop_thread_t* back_prop_thread = calloc( num_cores, sizeof( struct back_prop_thread_t));
     void* void_returns[num_cores];
+    float* thread_targets[num_cores];
     struct back_prop_return_t* back_prop_return[num_cores];
     pthread_t threads[num_cores];
 
+    int num_nodes = 0;
+    for( int i = 0; i < num_layers_alias; i++ ){
+        num_nodes += nodes_per_layer_alias[i];
+    }
 
     for( int i = 0; i < num_cores; i++ ){
         back_prop_return[i] = NULL;
+        thread_targets[i] = calloc( num_nodes, sizeof(float) );
+    }
+
+    for( int i = 0; i < num_nodes; i++ ){
+
+        for( int j = 0; j < num_cores; j++ ){
+
+            if( i >= num_nodes - nodes_per_layer_alias[num_layers_alias - 1] )
+                thread_targets[j][i] = targets[i];
+
+        }
+
     }
 
     int layer_base = network->network_args->nodes_per_layer[0];
@@ -333,6 +350,7 @@ void back_prop(struct network_t *network, float learning_rate, float bias_signif
             back_prop_thread[thread_num].network = network;
             back_prop_thread[thread_num].learning_rate = learning_rate;
             back_prop_thread[thread_num].bias_significance = bias_significance;
+            back_prop_thread[thread_num].node_targets = thread_targets[thread_num];
 
             //TODO: Create target values for calculations in threads
             //NOTE: This needs to be a subset of the target values of all nodes in the current layer since each thread calculates a portion of the layer
@@ -399,6 +417,13 @@ void back_prop(struct network_t *network, float learning_rate, float bias_signif
 
     free( back_prop_thread );
     back_prop_thread = NULL;
+
+    for( int i = 0; i < num_cores; i++ ){
+
+        free( thread_targets[num_cores] );
+        thread_targets[num_cores] = NULL;
+
+    }
 
 }
 
