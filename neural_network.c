@@ -212,11 +212,14 @@ void *thread_back_prop( void *args ){
             // Update weights
             values_alias->weights[weight_delta_offset - weight_min + prev_layer_node] += weight_delta;
 
+
         }
 
         weight_min = weight_max;
 
     }   
+
+    //TODO: Validate that the proper data is stored in return values
 
     return_values->thread_num = thread_data->thread_num;
 
@@ -260,7 +263,6 @@ void forward_prop( struct network_t* network){
             forward_prop_thread[thread_num].min_max[1] = thread_start + calcs_per_core[thread_num];
             thread_start += calcs_per_core[thread_num];
             forward_prop_thread[thread_num].current_layer = cur_layer;
-
 
            pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &forward_prop_thread[thread_num]);
 
@@ -355,7 +357,7 @@ void back_prop(struct network_t *network, float learning_rate, float bias_signif
             //TODO: Create target values for calculations in threads
             //NOTE: This needs to be a subset of the target values of all nodes in the current layer since each thread calculates a portion of the layer
             
-           pthread_create(&threads[thread_num], NULL, thread_forward_prop, (void *) &back_prop_thread[thread_num]);
+            pthread_create(&threads[thread_num], NULL, thread_back_prop, (void *) &back_prop_thread[thread_num]);
         }
 
         for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
