@@ -15,7 +15,7 @@ int main(){
     srand(time(NULL));
 
     const int height = 5;
-    const int width = 7;
+    const int width = 3;
 
     if( height % 2 == 0 ){
         fprintf( stdout, "ERROR: Height needs to be an odd number\n" );

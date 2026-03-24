@@ -104,138 +104,20 @@ void *thread_forward_prop( void *args ){
 
 void *thread_back_prop( void *args ){
 
-    struct back_prop_thread_t* thread_data = (struct back_prop_thread_t*)args;
-    struct network_t* network = thread_data->network;
-    struct network_values_t *values_alias = network->network_values;
-    struct network_args_t *args_alias = network->network_args;
+    struct back_prop_return_t* return_values = (struct back_prop_return_t*)malloc( sizeof( struct back_prop_return_t) );
 
-    int prev_layer_base = 0;
-    int prev_layer_nodes =  args_alias->nodes_per_layer[thread_data->current_layer - 1];
-    int weight_min = 1;
-    int weight_max;
-    int num_nodes = thread_data->min_max[1] - thread_data->min_max[0];
-    int num_weights = num_nodes * prev_layer_nodes;
+    return (void*) return_values;
 
-    struct back_prop_return_t* return_values = (struct back_prop_return_t*) malloc (sizeof( struct back_prop_return_t ) );
-
-    // Return delta for biases calculated for the range of nodes looped over
-    // Return deltas for all previous layer nodes
-    return_values->bias_deltas = (float*) calloc(num_nodes, sizeof(float));
-    return_values->prev_node_deltas = (float*) calloc(prev_layer_nodes, sizeof(float));
-    return_values->weights_deltas = (float*) calloc(num_weights, sizeof(float));
-
-
-    for( int layer = 0; layer < thread_data->current_layer - 1; layer++ ){
-
-        prev_layer_base += args_alias->nodes_per_layer[layer]; 
-        weight_min *= args_alias->nodes_per_layer[layer]; 
-    }
-
-    weight_min -= 1;
-
-    int weight_delta_offset = weight_min;
-
-    float delta_C;
-    float delta;
-    float weight_delta;
-    float prev_node_delta;
-    float bias_delta;
-    float sigmoid;
-
-    // Calculate how much weights should be changed compared to biases
-    float cur_weight_significance = ( 1 - thread_data->bias_significance ) / thread_data->current_layer;
-
-    // Calculate how much previous node targets should change in respect to biases and weights
-    float prev_node_significance = 1 - thread_data->bias_significance - cur_weight_significance;
-
-    for( int calc_node = thread_data->min_max[0]; calc_node < thread_data->min_max[1]; calc_node++ ){
-
-        values_alias->nodes[calc_node] = values_alias->biases[calc_node];
-        weight_max = weight_min + prev_layer_nodes;
-
-        switch( thread_data->cost ){
-
-            default:
-                // MEAN SQUARED ERROR ( aL - y ) ^ 2
-                delta_C = (values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] );
-                delta_C = delta_C * delta_C;
-                break;
-
-        }
-
-        prev_node_delta = 0;
-        bias_delta = 0;
-        for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + prev_layer_nodes; prev_layer_node++ ){
-
-            delta = delta_C * thread_data->learning_rate;
-
-            // dC/daL: Derivative of cost functions
-            switch( thread_data->cost ){
-                default:
-                    // Derivative of MSE 2 * ( aL - y )
-                    delta /= (2 * ( values_alias->nodes[calc_node] - thread_data->node_targets[calc_node] ));
-                    break;
-            }
-
-            // daL/dZL
-            switch( args_alias->functions[calc_node] ){
-
-                // sigmoid function: o(x)
-                // Derivative of sigmoid function: o(x) * (1 - o(x) )
-                case _SIGMOID:
-                sigmoid = 1 / ( 1 + expf(-1 * values_alias->nodes[calc_node]));
-                delta /= ( sigmoid * ( 1 - sigmoid ));
-                    break;
-                default:
-                    // If _LINEAR or _RELU, daL/dZL = 1 so nothing changes
-                    break;
-
-            }
-
-            // Divide weight changes evenly among all layers
-            delta /= thread_data->current_layer;
-
-            // Divide changes evenly among each node in the previous laye
-            delta /= prev_layer_nodes;
-
-
-            // Bias Delta Here dZL/dB = 1
-            // Multiplied by bias significance (how much biases should change compared to weights)
-            return_values->bias_deltas[calc_node - thread_data->min_max[0]] += delta * thread_data->bias_significance;
-
-            // Previous node delta dZL/a(L-1)
-            return_values->prev_node_deltas[prev_layer_node - prev_layer_base] += (delta / (values_alias->weights[weight_min + prev_layer_node] * prev_layer_nodes)) * prev_node_significance;
-
-            // dZL/dw: Derivative of weight with respect to ZL
-            return_values->weights_deltas[prev_layer_node - prev_layer_base] += (delta / values_alias->nodes[prev_layer_node] ) * cur_weight_significance;
-
-            // Update weights
-            values_alias->weights[weight_delta_offset - weight_min + prev_layer_node] += weight_delta;
-
-
-        }
-
-        weight_min = weight_max;
-
-    }   
-
-    //TODO: Validate that the proper data is stored in return values
-
-    return_values->thread_num = thread_data->thread_num;
-
-    return (void *)return_values;
 }
 
 void forward_prop( struct network_t* network){
-
-    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
-
     int num_layers_alias = network->network_args->num_layers;
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
     
     int *calcs_per_core;
 
     int max_threads;
+    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
 
     struct forward_prop_thread_t * forward_prop_thread = calloc(num_cores, sizeof(struct forward_prop_thread_t));
     pthread_t threads[num_cores];
@@ -243,6 +125,7 @@ void forward_prop( struct network_t* network){
     int layer_base = network->network_args->nodes_per_layer[0];
 
     int thread_start;
+
     for( int cur_layer = 1; cur_layer < num_layers_alias; cur_layer++ ){
 
         calcs_per_core = calloc( num_cores, sizeof(int) );
@@ -256,6 +139,7 @@ void forward_prop( struct network_t* network){
             max_threads = nodes_per_layer_alias[cur_layer];
 
         thread_start = layer_base;
+
         for( int thread_num = 0; thread_num < max_threads; thread_num++){
 
             forward_prop_thread[thread_num].network = network;
@@ -285,147 +169,26 @@ void forward_prop( struct network_t* network){
 
 void back_prop(struct network_t *network, float learning_rate, float bias_significance, float* targets ){
 
-    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
-
     int num_layers_alias = network->network_args->num_layers;
     int *nodes_per_layer_alias = network->network_args->nodes_per_layer;
-
     int *calcs_per_core;
-    int max_threads;
+    
+    int num_cores = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    
+    struct back_prop_thread_t* back_prop_thread = calloc( num_cores, sizeof(struct back_prop_thread_t) );
+    pthread_t thread[num_cores];
 
-    struct back_prop_thread_t* back_prop_thread = calloc( num_cores, sizeof( struct back_prop_thread_t));
-    void* void_returns[num_cores];
-    float* thread_targets[num_cores];
-    struct back_prop_return_t* back_prop_return[num_cores];
-    pthread_t threads[num_cores];
-
-    int num_nodes = 0;
-    for( int i = 0; i < num_layers_alias; i++ ){
-        num_nodes += nodes_per_layer_alias[i];
+    int layer_base = 0;
+    int weights_base = 1;
+    for( int layer = 0; layer < num_layers_alias; layer++ ){
+        layer_base += nodes_per_layer_alias[layer]; 
+        weights_base *= nodes_per_layer_alias[layer];
     }
 
-    for( int i = 0; i < num_cores; i++ ){
-        back_prop_return[i] = NULL;
-        thread_targets[i] = calloc( num_nodes, sizeof(float) );
-    }
+    weights_base--;
 
-    for( int i = 0; i < num_nodes; i++ ){
+    //Create one iteration of back propogation here
 
-        for( int j = 0; j < num_cores; j++ ){
-
-            if( i >= num_nodes - nodes_per_layer_alias[num_layers_alias - 1] )
-                thread_targets[j][i] = targets[i];
-
-        }
-
-    }
-
-    int layer_base = network->network_args->nodes_per_layer[0];
-
-    int calling_thread;
-
-    int thread_start;
-    int prev_layer_base;
-    int thread_weight_min, weight_min, weight_max, weights_in_thread;
-
-    float* hidden_layer_targets;
-    for( int cur_layer = 1; cur_layer < num_layers_alias; cur_layer++ ){
-
-        calcs_per_core = calloc( num_cores, sizeof(int) );
-        
-        for( int node_to_calc = 0; node_to_calc < nodes_per_layer_alias[cur_layer]; node_to_calc++ )
-            calcs_per_core[node_to_calc % num_cores]++;
-
-        if( num_cores < nodes_per_layer_alias[cur_layer] )
-            max_threads = num_cores;
-        else
-            max_threads = nodes_per_layer_alias[cur_layer];
-
-        thread_start = layer_base;
-        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
-            back_prop_thread[thread_num].network = network;
-            back_prop_thread[thread_num].min_max[0] = thread_start;
-            back_prop_thread[thread_num].min_max[1] = thread_start + calcs_per_core[thread_num];
-            thread_start += calcs_per_core[thread_num];
-            back_prop_thread[thread_num].current_layer = cur_layer;
-            back_prop_thread[thread_num].cost = _MEAN_SQUARED_ERROR;
-            back_prop_thread[thread_num].network = network;
-            back_prop_thread[thread_num].learning_rate = learning_rate;
-            back_prop_thread[thread_num].bias_significance = bias_significance;
-            back_prop_thread[thread_num].node_targets = thread_targets[thread_num];
-
-            //TODO: Create target values for calculations in threads
-            //NOTE: This needs to be a subset of the target values of all nodes in the current layer since each thread calculates a portion of the layer
-            
-            pthread_create(&threads[thread_num], NULL, thread_back_prop, (void *) &back_prop_thread[thread_num]);
-        }
-
-        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
-
-            pthread_join(thread_num, &void_returns[thread_num]);
-
-        }
-
-        prev_layer_base = 0;
-        weight_min = 1;
-        for( int layer = 0; layer < cur_layer; layer++ ){
-            prev_layer_base += network->network_args->nodes_per_layer[layer];
-            thread_weight_min *= network->network_args->nodes_per_layer[layer];
-        }
-
-        weight_min -= 1;
-
-        for( int thread_num = 0; thread_num < max_threads; thread_num++ ){
-
-            // Note: Void returns array may not be in order that back_prop_returns needs to be
-            back_prop_return[thread_num] = (struct back_prop_return_t*) void_returns[thread_num];
-
-            calling_thread = back_prop_return[thread_num]->thread_num;
-
-            // Update biases for current layer
-            for( int node = back_prop_thread[calling_thread].min_max[0]; node < back_prop_thread[calling_thread].min_max[1]; node++ ){
-                network->network_values->biases[node] += back_prop_return[thread_num]->bias_deltas[node - back_prop_thread[calling_thread].min_max[0] ];
-                weight_min = thread_weight_min + back_prop_return[thread_num]->bias_deltas[node - back_prop_thread[calling_thread].min_max[0]];
-                weights_in_thread = (back_prop_thread[calling_thread].min_max[1] - back_prop_thread[calling_thread].min_max[0]) * network->network_args->nodes_per_layer[cur_layer - 1];
-
-                for( int weight = weight_min; weight < weight_min + weights_in_thread; weight++ ){
-
-                    network->network_values->weights[weight] += back_prop_return[thread_num]->weights_deltas[ weight - weight_min];
-
-                }
-
-            }
-
-            // Update target node value for previous layer, enables recursion
-            if( prev_layer_base != 0 ){
-
-                for( int prev_layer_node = prev_layer_base; prev_layer_node < prev_layer_base + network->network_args->nodes_per_layer[cur_layer - 1]; prev_layer_node++ ){
-
-                    network->network_values->nodes[prev_layer_node] += back_prop_return[thread_num]->prev_node_deltas[prev_layer_node - prev_layer_base]; 
-
-                }
-
-            }
-
-            free( back_prop_return[thread_num] );
-            back_prop_return[thread_num] = NULL;
-
-        }
-
-        free( calcs_per_core );
-        calcs_per_core = NULL;
-
-    }
-
-    free( back_prop_thread );
-    back_prop_thread = NULL;
-
-    for( int i = 0; i < num_cores; i++ ){
-
-        free( thread_targets[num_cores] );
-        thread_targets[num_cores] = NULL;
-
-    }
 
 }
 
